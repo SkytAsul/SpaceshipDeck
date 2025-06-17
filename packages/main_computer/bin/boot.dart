@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:args/args.dart';
+import 'package:main_computer/main_computer.dart';
 
 ArgParser buildParser() {
   return ArgParser()
@@ -16,7 +19,7 @@ ArgParser buildParser() {
     )
     ..addOption(
       "agent-token",
-      mandatory: true
+      defaultsTo: Platform.environment["AGENT_TOKEN"]
     );
 }
 
@@ -25,27 +28,35 @@ void printUsage(ArgParser argParser) {
   print(argParser.usage);
 }
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
+  MainComputerInit computer;
   try {
     final ArgResults results = argParser.parse(arguments);
-    bool verbose = false;
 
     // Process the parsed arguments.
     if (results.flag('help')) {
       printUsage(argParser);
       return;
     }
-    if (results.flag('verbose')) {
-      verbose = true;
-    }
-    String token = results.option("agent-token")!;
 
-    print("Launching agent with token $token");
+    final agentToken = results.option("agent-token");
+    if (agentToken == null) {
+      throw ArgumentError("agent_token not found.");
+    }
+
+    computer = MainComputerInit(
+      verbose: results.flag('verbose'),
+      agentToken: agentToken,
+    );
   } on FormatException catch (e) {
-    // Print usage information if an invalid argument was provided.
     print(e.message);
     print('');
     printUsage(argParser);
+    exit(2);
   }
+
+  await computer.boot();
+  await runConsole();
+  await computer.shutdown();
 }

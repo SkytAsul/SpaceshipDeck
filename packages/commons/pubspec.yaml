@@ -1,0 +1,8 @@
+name: commons
+description: A simple component holding Dart objects common to other components.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.8.1
+resolution: workspace

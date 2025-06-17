@@ -4,3 +4,4 @@ environment:
   sdk: ^3.8.1
 workspace:
   - packages/main_computer
+  - packages/commons

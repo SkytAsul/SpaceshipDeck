@@ -3,15 +3,22 @@ description: The main component handling all agents management.
 version: 0.0.1
 publish_to: none
 
+executables:
+  spaceship_deck: boot
+
 environment:
   sdk: ^3.8.1
 resolution: workspace
 
 dependencies:
+  commons:
   args: ^2.5.0
   openapi_generator_annotations: ^6.1.0
   space_traders:
     path: ./space_traders_api
+  grpc: ^4.1.0
+  protobuf: ^4.1.0
+  logging: ^1.3.0
 
 dev_dependencies:
   lints: ^5.0.0

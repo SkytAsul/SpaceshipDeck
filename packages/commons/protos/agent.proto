@@ -1,0 +1,12 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+service Agent {
+    
+    rpc GetAgentInfo (google.protobuf.Empty) returns (AgentInfo) {}
+
+}
+
+message AgentInfo {
+    string name = 1;
+}
