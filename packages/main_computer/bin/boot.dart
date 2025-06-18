@@ -30,7 +30,7 @@ void printUsage(ArgParser argParser) {
 
 Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
-  MainComputerInit computer;
+  /*MainComputerInit computer;
   try {
     final ArgResults results = argParser.parse(arguments);
 
@@ -54,9 +54,11 @@ Future<void> main(List<String> arguments) async {
     print('');
     printUsage(argParser);
     exit(2);
-  }
+  }*/
 
-  await computer.boot();
+  final kernel = await loadKernel();
+
+  await kernel.boot();
   await runConsole();
-  await computer.shutdown();
+  await kernel.shutdown();
 }
