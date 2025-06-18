@@ -13,3 +13,18 @@ control the Main Computer using a GUI.
 
 More components will be created to store metrics and probably more in the
 future.
+
+## Development installation
+
+### Requirements
+
+Having Java installed.
+
+Meeting the [prerequisites](https://grpc.io/docs/languages/dart/quickstart/#prerequisites) for gRPC.
+
+### Setup
+
+1. Clone the repository
+1. `dart pub get` in the root directory
+1. `dart run build_runner build` in `/packages/main_computer`
+1. `./tools/autogen.sh` in `/packages/commons`
