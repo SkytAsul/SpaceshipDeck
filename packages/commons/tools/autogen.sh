@@ -15,7 +15,9 @@ else
     exit 1
 fi
 
+echo Generating protobuf code. Using google includes from $include_google.
+
 mkdir -p lib/src/generated
 protoc --dart_out=grpc:lib/src/generated -I/usr/include $include_google/*.proto -Iprotos protos/*
 
-echo Protobugs generated
+echo Protobuf code generated

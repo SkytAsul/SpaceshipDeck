@@ -26,5 +26,5 @@ Meeting the [prerequisites](https://grpc.io/docs/languages/dart/quickstart/#prer
 
 1. Clone the repository
 1. `dart pub get` in the root directory
-1. `dart run build_runner build` in `/packages/main_computer`
-1. `./tools/autogen.sh` in `/packages/commons`
+1. `dart run build_runner build` in `/packages/main_computer` to autogenerate the SpaceTraders API code
+1. `./tools/autogen.sh` in `/packages/commons` to autogenerate the Protobuf code

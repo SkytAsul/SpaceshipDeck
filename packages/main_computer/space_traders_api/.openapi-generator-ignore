@@ -27,3 +27,4 @@ git_push.sh
 .gitignore
 
 lib/model/get_system_waypoints_traits_parameter.dart
+lib/model/get_supply_chain200_response_data.dart
