@@ -5,7 +5,6 @@ import 'package:main_computer/src/communication_bus/communication_bus.dart';
 import 'package:space_traders/api.dart';
 
 class SpaceshipKernel {
-
   final _logger = Logger("SpaceshipDeck.$SpaceshipKernel");
 
   ApiClient? _apiClient;
@@ -13,8 +12,11 @@ class SpaceshipKernel {
 
   Map<KernelUnit, _KernelUnitStatus> _units;
 
-  SpaceshipKernel({required List<KernelUnit> units}) :
-    _units = Map.fromIterable(units, value: (unit) => _createUnitStatus(unit));
+  SpaceshipKernel({required List<KernelUnit> units})
+    : _units = Map.fromIterable(
+        units,
+        value: (unit) => _createUnitStatus(unit),
+      );
 
   Future<void> boot() async {
     _logger.info("Booting up...");
@@ -23,17 +25,19 @@ class SpaceshipKernel {
       await loadUnit(unit);
     }
 
-    // TODO move this to a service
-    _apiClient = ApiClient(authentication: HttpBearerAuth()..accessToken = agentToken);
-  
-    final result = await AgentsApi(apiClient).getMyAgent();
-    if (result == null) {
-      throw StateError("Unable to fetch agent informations.");
-    }
-
-    _logger.info("Hello ${result.data.symbol}!");
-
     daemon();
+  }
+
+  void daemon() async {
+    /*while (false) {
+      // do loop
+    }*/
+  }
+
+  Future<void> shutdown() async {
+    for (var unit in _units.keys) {
+      await unloadUnit(unit);
+    }
   }
 
   Future<bool> loadUnit(KernelUnit unit) async {
@@ -43,9 +47,15 @@ class SpaceshipKernel {
     _logger.fine("Loading ${unit.name}...");
 
     final result = switch (record) {
-      (KernelService(), _KernelServiceStatus()) => await _loadService(record.$1, record.$2),
-      (KernelTimer(), _KernelTimerStatus()) => await _loadTimer(record.$1, record.$2),
-      _ => throw StateError("Mismatched unit and status types")
+      (KernelService(), _KernelServiceStatus()) => await _loadService(
+        record.$1,
+        record.$2,
+      ),
+      (KernelTimer(), _KernelTimerStatus()) => await _loadTimer(
+        record.$1,
+        record.$2,
+      ),
+      _ => throw StateError("Mismatched unit and status types"),
     };
 
     if (result) {
@@ -57,15 +67,19 @@ class SpaceshipKernel {
     return result;
   }
 
-  Future<bool> _loadService<T>(KernelService<T> service, _KernelServiceStatus<T> status) async {
-    try{
+  Future<bool> _loadService<T>(
+    KernelService<T> service,
+    _KernelServiceStatus<T> status,
+  ) async {
+    try {
       if (service.start != null) {
         final value = await service.start!(this);
         status.value = value;
       }
       status.status = KernelServiceStatus.loaded;
       return true;
-    } catch (e) {
+    } catch (e, st) {
+      _logger.severe("Error when loading service", e, st);
       status.status = KernelServiceStatus.failed;
       return false;
     }
@@ -76,18 +90,39 @@ class SpaceshipKernel {
     return Future.value(true);
   }
 
-  void daemon() async {
-    while(false) {
-      // do loop
+  Future<void> unloadUnit(KernelUnit unit) async {
+    var status = _units[unit]!;
+    var record = (unit, status);
+
+    _logger.fine("Unloading ${unit.name}...");
+
+    switch (record) {
+      case (KernelService(), _KernelServiceStatus()):
+        await _unloadService(record.$1, record.$2);
+      case (KernelTimer(), _KernelTimerStatus()):
+        break; // nothing to do
+      case _:
+        throw StateError("Mismatched unit and status types");
     }
+
+    _logger.info("Unloaded ${unit.name}.");
   }
 
-  Future<void> shutdown() async {
-    _apiClient?.client.close();
-    
-    // TODO shutdown
-  }
+  Future<void> _unloadService<T>(
+    KernelService<T> service,
+    _KernelServiceStatus<T> status,
+  ) async {
+    if (status.status != KernelServiceStatus.loaded) {
+      return;
+    }
 
+    if (service.stop != null) {
+      service.stop!.call(status.value);
+    }
+    /*if (service.stop != null) {
+      service.stop!(status.value);
+    }*/
+  }
 }
 
 sealed class KernelUnit {
@@ -97,8 +132,8 @@ sealed class KernelUnit {
 class KernelService<T> implements KernelUnit {
   @override
   final String name;
-  final FutureOr<T> Function(SpaceshipKernel)? start;
-  final FutureOr<void> Function(T)? stop;
+  final FutureOr<T?> Function(SpaceshipKernel)? start;
+  final void Function(T?)? stop;
 
   KernelService({required this.name, this.start, this.stop});
 }
@@ -109,18 +144,17 @@ class KernelTimer implements KernelUnit {
   final Duration interval;
   final FutureOr<void> Function(SpaceshipKernel) function;
 
-  KernelTimer({required this.name, required this.interval, required this.function});
+  KernelTimer({
+    required this.name,
+    required this.interval,
+    required this.function,
+  });
 }
 
-enum KernelServiceStatus {
-  notLoaded,
-  failed,
-  loaded,
-  ;
-}
+enum KernelServiceStatus { notLoaded, failed, loaded }
 
 _KernelUnitStatus _createUnitStatus(KernelUnit unit) {
-  return switch(unit) {
+  return switch (unit) {
     KernelService() => _KernelServiceStatus(),
     KernelTimer() => _KernelTimerStatus(),
   };

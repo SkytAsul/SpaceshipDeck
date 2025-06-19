@@ -5,14 +5,11 @@ import 'package:main_computer/main_computer.dart';
 import 'agent.dart';
 
 class CommunicationBus {
-
   final _logger = Logger("SpaceshipDeck.CommunicationBus");
   // ignore: unused_field
   final SpaceshipKernel _kernel;
 
-  final _server = Server.create(
-    services: [AgentService()],
-  );
+  final _server = Server.create(services: [AgentService()]);
 
   CommunicationBus(this._kernel);
 
@@ -25,7 +22,6 @@ class CommunicationBus {
     _logger.info("Shutting down...");
     return _server.shutdown();
   }
-
 }
 
 KernelService getCommunicationBusService() {
@@ -36,6 +32,6 @@ KernelService getCommunicationBusService() {
       await bus.start();
       return bus;
     },
-    stop: (bus) => bus.shutdown(),
+    stop: (bus) => bus!.shutdown(),
   );
 }

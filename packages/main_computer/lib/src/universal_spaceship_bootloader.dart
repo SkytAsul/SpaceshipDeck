@@ -1,6 +1,7 @@
 import 'package:logging/logging.dart';
 import 'package:main_computer/main_computer.dart';
 import 'package:main_computer/src/communication_bus/communication_bus.dart';
+import 'package:main_computer/src/extraship_communication.dart';
 
 void _setupLogging() {
   hierarchicalLoggingEnabled = true;
@@ -8,6 +9,12 @@ void _setupLogging() {
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print
     print("[${record.loggerName}] [${record.level.name}] ${record.message}");
+    if (record.error != null) {
+      print(record.error);
+    }
+    if (record.stackTrace != null) {
+      print(record.stackTrace);
+    }
   });
 }
 
@@ -20,8 +27,9 @@ Future<SpaceshipKernel> loadKernel() async {
 
   final kernel = SpaceshipKernel(
     units: [
-      getCommunicationBusService()
-    ]
+      getCommunicationBusService(),
+      // getExtraShipCommunicationService(),
+    ],
   );
   return kernel;
 }
