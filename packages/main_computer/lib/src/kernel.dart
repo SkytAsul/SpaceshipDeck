@@ -72,10 +72,11 @@ class SpaceshipKernel {
     _KernelServiceStatus<T> status,
   ) async {
     try {
-      if (service.start != null) {
-        final value = await service.start!(this);
-        status.value = value;
-      }
+      final context = KernelUnitContext._(
+        kernel: this,
+        logger: Logger("SpaceshipDeck.${service.name}"),
+      );
+      status.value = await service._callStart(context);
       status.status = KernelServiceStatus.loaded;
       return true;
     } catch (e, st) {
@@ -116,26 +117,41 @@ class SpaceshipKernel {
       return;
     }
 
-    if (service.stop != null) {
-      service.stop!.call(status.value);
-    }
-    /*if (service.stop != null) {
-      service.stop!(status.value);
-    }*/
+    service._callStop(status.value as T);
   }
+}
+
+class KernelUnitContext {
+  final SpaceshipKernel kernel;
+  final Logger logger;
+
+  KernelUnitContext._({required this.kernel, required this.logger});
 }
 
 sealed class KernelUnit {
   String get name;
 }
 
-class KernelService<T> implements KernelUnit {
+interface class KernelService<T> implements KernelUnit {
   @override
   final String name;
-  final FutureOr<T?> Function(SpaceshipKernel)? start;
-  final void Function(T?)? stop;
+  final FutureOr<T> Function(KernelUnitContext)? start;
+  final FutureOr<void> Function(T)? stop;
 
-  KernelService({required this.name, this.start, this.stop});
+  KernelService({required this.name, this.start, required this.stop});
+
+  Future<T?> _callStart(KernelUnitContext context) async {
+    if (start != null) {
+      return await start!(context);
+    }
+    return null;
+  }
+
+  void _callStop(T value) async {
+    if (stop != null) {
+      await stop!(value);
+    }
+  }
 }
 
 class KernelTimer implements KernelUnit {

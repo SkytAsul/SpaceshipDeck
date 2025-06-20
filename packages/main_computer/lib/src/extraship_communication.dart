@@ -18,7 +18,7 @@ class SpaceTradersApiGenerator {}
 KernelService getExtraShipCommunicationService() {
   return KernelService<ApiClient>(
     name: "Communication Bus",
-    start: (kernel) async {
+    start: (context) async {
       final client = ApiClient(
         authentication: HttpBearerAuth()..accessToken = "TODO",
       );
@@ -32,6 +32,6 @@ KernelService getExtraShipCommunicationService() {
 
       return client;
     },
-    stop: (client) => client!.client.close(),
+    stop: (client) => client.client.close(),
   );
 }
