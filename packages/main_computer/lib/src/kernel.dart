@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:logging/logging.dart';
-import 'package:main_computer/src/communication_bus/communication_bus.dart';
 import 'package:space_traders/api.dart';
 
 class SpaceshipKernel {
@@ -10,13 +9,13 @@ class SpaceshipKernel {
   ApiClient? _apiClient;
   ApiClient get apiClient => _apiClient!;
 
-  Map<KernelUnit, _KernelUnitStatus> _units;
+  final Map<KernelUnit, _KernelUnitStatus> _units = {};
 
-  SpaceshipKernel({required List<KernelUnit> units})
-    : _units = Map.fromIterable(
-        units,
-        value: (unit) => _createUnitStatus(unit),
-      );
+  SpaceshipKernel({required List<KernelUnit> units}) {
+    for (var unit in units) {
+      _units[unit] = _createUnitStatus(unit);
+    }
+  }
 
   Future<void> boot() async {
     _logger.info("Booting up...");
@@ -72,11 +71,7 @@ class SpaceshipKernel {
     _KernelServiceStatus<T> status,
   ) async {
     try {
-      final context = KernelUnitContext._(
-        kernel: this,
-        logger: Logger("SpaceshipDeck.${service.name}"),
-      );
-      status.value = await service._callStart(context);
+      status.value = await service._callStart(status.context);
       status.status = KernelServiceStatus.loaded;
       return true;
     } catch (e, st) {
@@ -119,6 +114,17 @@ class SpaceshipKernel {
 
     service._callStop(status.value as T);
   }
+
+  _KernelUnitStatus _createUnitStatus(KernelUnit unit) {
+    final context = KernelUnitContext._(
+      kernel: this,
+      logger: Logger("SpaceshipDeck.${unit.name}"),
+    );
+    return switch (unit) {
+      KernelService() => _KernelServiceStatus(context),
+      KernelTimer() => _KernelTimerStatus(context),
+    };
+  }
 }
 
 class KernelUnitContext {
@@ -126,6 +132,15 @@ class KernelUnitContext {
   final Logger logger;
 
   KernelUnitContext._({required this.kernel, required this.logger});
+
+  /// Exposes [instance] to all other units. If another instance of the same
+  /// type has already been exposed by this unit, [instance] will replace it.
+  /// 
+  /// In the case of a service, the exposed data will be lost when the service
+  /// gets unloaded.
+  void expose<T>(T instance) {
+    // TODO
+  }
 }
 
 sealed class KernelUnit {
@@ -169,18 +184,19 @@ class KernelTimer implements KernelUnit {
 
 enum KernelServiceStatus { notLoaded, failed, loaded }
 
-_KernelUnitStatus _createUnitStatus(KernelUnit unit) {
-  return switch (unit) {
-    KernelService() => _KernelServiceStatus(),
-    KernelTimer() => _KernelTimerStatus(),
-  };
+sealed class _KernelUnitStatus {
+  KernelUnitContext context;
+
+  _KernelUnitStatus(this.context);
 }
 
-sealed class _KernelUnitStatus {}
-
-class _KernelServiceStatus<T> implements _KernelUnitStatus {
+class _KernelServiceStatus<T> extends _KernelUnitStatus {
   KernelServiceStatus status = KernelServiceStatus.notLoaded;
   T? value;
+
+  _KernelServiceStatus(super.context);
 }
 
-class _KernelTimerStatus implements _KernelUnitStatus {}
+class _KernelTimerStatus extends _KernelUnitStatus {
+  _KernelTimerStatus(super.context);
+}

@@ -17,7 +17,7 @@ class SpaceTradersApiGenerator {}
 
 KernelService getExtraShipCommunicationService() {
   return KernelService<ApiClient>(
-    name: "Communication Bus",
+    name: "Extra-ship Communications",
     start: (context) async {
       final client = ApiClient(
         authentication: HttpBearerAuth()..accessToken = "TODO",
@@ -29,6 +29,8 @@ KernelService getExtraShipCommunicationService() {
       }
 
       print("Hello ${myAgent.data.symbol}!");
+
+      context.expose(client);
 
       return client;
     },
