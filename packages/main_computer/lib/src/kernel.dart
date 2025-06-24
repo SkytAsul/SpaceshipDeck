@@ -13,6 +13,8 @@ class SpaceshipKernel {
 
   final Map<KernelUnit, _KernelUnitStatus> _units = {};
 
+  Iterable<KernelUnit> get units => _units.keys;
+
   SpaceshipKernel({required List<KernelUnit> units}) {
     for (var unit in units) {
       _units[unit] = _createUnitStatus(unit);
@@ -51,13 +53,21 @@ class SpaceshipKernel {
     return null;
   }
 
+  T? get<T>() {
+    for (var status in _units.values) {
+      final obj = status.context.exposed[T];
+      if (obj is T) {
+        return obj;
+      }
+    }
+    return null;
+  }
+
   Future<bool> loadUnit(KernelUnit unit) async {
     var status = _units[unit]!;
     var record = (unit, status);
 
-    _logger.fine("Loading ${unit.name}...");
-
-    final result = switch (record) {
+    return switch (record) {
       (KernelService(), _KernelServiceStatus()) => await _loadService(
         record.$1,
         record.$2,
@@ -69,14 +79,6 @@ class SpaceshipKernel {
       (KernelCommand(), _KernelUnitStatus()) => true,
       _ => throw StateError("Mismatched unit and status types"),
     };
-
-    if (result) {
-      _logger.info("Loaded ${unit.name}.");
-    } else {
-      _logger.severe("Failed to load ${unit.name}.");
-    }
-
-    return result;
   }
 
   Future<bool> _loadService<T>(
@@ -84,8 +86,10 @@ class SpaceshipKernel {
     _KernelServiceStatus<T> status,
   ) async {
     try {
+      _logger.fine("Loading ${service.name}...");
       status.value = await service._callStart(status.context);
       status.status = KernelServiceStatus.loaded;
+      _logger.info("Loaded ${service.name}.");
       return true;
     } catch (e, st) {
       _logger.severe("Error when loading service", e, st);
@@ -103,7 +107,6 @@ class SpaceshipKernel {
     var status = _units[unit]!;
     var record = (unit, status);
 
-    _logger.fine("Unloading ${unit.name}...");
 
     switch (record) {
       case (KernelService(), _KernelServiceStatus()):
@@ -114,7 +117,6 @@ class SpaceshipKernel {
         throw StateError("Mismatched unit and status types");
     }
 
-    _logger.info("Unloaded ${unit.name}.");
   }
 
   Future<void> _unloadService<T>(
@@ -125,7 +127,9 @@ class SpaceshipKernel {
       return;
     }
 
+    _logger.fine("Unloading ${service.name}...");
     service._callStop(status.value as T);
+    _logger.info("Unloaded ${service.name}.");
   }
 
   _KernelUnitStatus _createUnitStatus(KernelUnit unit) {
@@ -144,6 +148,8 @@ class KernelUnitContext {
   final SpaceshipKernel kernel;
   final Logger logger;
 
+  final Map<Type, Object?> exposed = {};
+
   KernelUnitContext._({required this.kernel, required this.logger});
 
   /// Exposes [instance] to all other units. If another instance of the same
@@ -152,7 +158,7 @@ class KernelUnitContext {
   /// In the case of a service, the exposed data will be lost when the service
   /// gets unloaded.
   void expose<T>(T instance) {
-    // TODO
+    exposed[T] = instance;
   }
 }
 
