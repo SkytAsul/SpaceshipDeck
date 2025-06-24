@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:space_traders/api.dart';
 
+typedef KernelCommandCallable = FutureOr<void> Function(List<String>);
+
 class SpaceshipKernel {
   final _logger = Logger("SpaceshipDeck.$SpaceshipKernel");
 
@@ -24,10 +26,10 @@ class SpaceshipKernel {
       await loadUnit(unit);
     }
 
-    daemon();
+    _daemon();
   }
 
-  void daemon() async {
+  void _daemon() async {
     /*while (false) {
       // do loop
     }*/
@@ -37,6 +39,16 @@ class SpaceshipKernel {
     for (var unit in _units.keys) {
       await unloadUnit(unit);
     }
+  }
+
+  KernelCommandCallable? getCommand(String name) {
+    for (var unit in _units.keys) {
+      if (unit is KernelCommand && unit.name == name) {
+        final status = _units[unit]!;
+        return (args) => unit.function(status.context, args);
+      }
+    }
+    return null;
   }
 
   Future<bool> loadUnit(KernelUnit unit) async {
@@ -50,10 +62,11 @@ class SpaceshipKernel {
         record.$1,
         record.$2,
       ),
-      (KernelTimer(), _KernelTimerStatus()) => await _loadTimer(
+      (KernelTimer(), _KernelUnitStatus()) => await _loadTimer(
         record.$1,
         record.$2,
       ),
+      (KernelCommand(), _KernelUnitStatus()) => true,
       _ => throw StateError("Mismatched unit and status types"),
     };
 
@@ -81,7 +94,7 @@ class SpaceshipKernel {
     }
   }
 
-  Future<bool> _loadTimer(KernelTimer timer, _KernelTimerStatus status) {
+  Future<bool> _loadTimer(KernelTimer timer, _KernelUnitStatus status) {
     // TODO
     return Future.value(true);
   }
@@ -95,7 +108,7 @@ class SpaceshipKernel {
     switch (record) {
       case (KernelService(), _KernelServiceStatus()):
         await _unloadService(record.$1, record.$2);
-      case (KernelTimer(), _KernelTimerStatus()):
+      case (KernelTimer() || KernelCommand(), _KernelUnitStatus()):
         break; // nothing to do
       case _:
         throw StateError("Mismatched unit and status types");
@@ -122,7 +135,7 @@ class SpaceshipKernel {
     );
     return switch (unit) {
       KernelService() => _KernelServiceStatus(context),
-      KernelTimer() => _KernelTimerStatus(context),
+      KernelTimer() || KernelCommand() => _KernelUnitStatus(context),
     };
   }
 }
@@ -147,7 +160,7 @@ sealed class KernelUnit {
   String get name;
 }
 
-interface class KernelService<T> implements KernelUnit {
+final class KernelService<T> implements KernelUnit {
   @override
   final String name;
   final FutureOr<T> Function(KernelUnitContext)? start;
@@ -169,11 +182,11 @@ interface class KernelService<T> implements KernelUnit {
   }
 }
 
-class KernelTimer implements KernelUnit {
+final class KernelTimer implements KernelUnit {
   @override
   final String name;
   final Duration interval;
-  final FutureOr<void> Function(SpaceshipKernel) function;
+  final FutureOr<void> Function(KernelUnitContext) function;
 
   KernelTimer({
     required this.name,
@@ -182,9 +195,20 @@ class KernelTimer implements KernelUnit {
   });
 }
 
+final class KernelCommand implements KernelUnit {
+  @override
+  final String name;
+  final FutureOr<void> Function(KernelUnitContext, List<String>) function;
+
+  KernelCommand({
+    required this.name,
+    required this.function,
+  });
+}
+
 enum KernelServiceStatus { notLoaded, failed, loaded }
 
-sealed class _KernelUnitStatus {
+class _KernelUnitStatus {
   KernelUnitContext context;
 
   _KernelUnitStatus(this.context);
@@ -195,8 +219,4 @@ class _KernelServiceStatus<T> extends _KernelUnitStatus {
   T? value;
 
   _KernelServiceStatus(super.context);
-}
-
-class _KernelTimerStatus extends _KernelUnitStatus {
-  _KernelTimerStatus(super.context);
 }

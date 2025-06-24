@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:logging/logging.dart';
 import 'package:main_computer/main_computer.dart';
+import 'package:main_computer/src/commands.dart';
 import 'package:main_computer/src/communication_bus/communication_bus.dart';
 import 'package:main_computer/src/extraship_communication.dart';
 
@@ -10,10 +13,10 @@ void _setupLogging() {
     // ignore: avoid_print
     print("[${record.loggerName}] [${record.level.name}] ${record.message}");
     if (record.error != null) {
-      print(record.error);
+      stderr.writeln(record.error);
     }
     if (record.stackTrace != null) {
-      print(record.stackTrace);
+      stderr.writeln(record.stackTrace);
     }
   });
 }
@@ -28,7 +31,8 @@ Future<SpaceshipKernel> loadKernel() async {
   final kernel = SpaceshipKernel(
     units: [
       getCommunicationBusService(),
-      // getExtraShipCommunicationService(),
+      getExtraShipCommunicationService(),
+      ...getKernelCommands()
     ],
   );
   return kernel;

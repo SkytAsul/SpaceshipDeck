@@ -59,6 +59,6 @@ Future<void> main(List<String> arguments) async {
   final kernel = await loadKernel();
 
   await kernel.boot();
-  await runConsole();
+  await runConsole(kernel);
   await kernel.shutdown();
 }
