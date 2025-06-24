@@ -1,10 +1,14 @@
-// Openapi Generator last run: : 2025-06-19T10:49:19.561348
+// Openapi Generator last run: : 2025-06-24T19:37:27.114612
+import 'dart:io';
+
 import 'package:main_computer/src/kernel.dart';
 import 'package:openapi_generator_annotations/openapi_generator_annotations.dart';
 import 'package:space_traders/api.dart';
 
 @Openapi(
-  inputSpec: RemoteSpec(path: "https://spacetraders.io/SpaceTraders.json"),
+  inputSpec: RemoteSpec(
+    path: "https://api.spacetraders.io/v2/documentation/json",
+  ),
   generatorName: Generator.dart,
   outputDirectory: "space_traders_api",
   additionalProperties: AdditionalProperties(
@@ -15,25 +19,77 @@ import 'package:space_traders/api.dart';
 )
 class SpaceTradersApiGenerator {}
 
-KernelService getExtraShipCommunicationService() {
-  return KernelService<ApiClient>(
-    name: "Extra-ship Communications",
-    start: (context) async {
-      final client = ApiClient(
-        authentication: HttpBearerAuth()..accessToken = "TODO",
+class _ExtrashipCommunication {
+  static const _accountTokenEnvVar = "SPACETRADERSAPI_TOKEN";
+
+  final agentInfoFile = File("${Platform.environment["HOME"]}/.spaceship_agent");
+  final KernelUnitContext context;
+  
+  ApiClient? _client;
+  ApiClient get client => _client!;
+
+  _ExtrashipCommunication(this.context);
+
+  Future<Agent> loadAgent() async {
+    if (await agentInfoFile.exists()) {
+      var agentToken = await agentInfoFile.readAsString();
+
+      _client = ApiClient(
+        authentication: HttpBearerAuth()..accessToken = agentToken
       );
 
-      final myAgent = await AgentsApi(client).getMyAgent();
-      if (myAgent == null) {
-        throw StateError("Unable to fetch agent informations.");
+      try {
+        final agentResult = await AgentsApi(_client).getMyAgent();
+        return agentResult!.data;
+      } on ApiException catch (ex) {
+        if (ex.code == 4113) {
+          context.logger.warning("The agent token is outdated. Generating a new one.");
+          return await _registerAgent();
+        } else {
+          rethrow;
+        }
       }
+    } else {
+      return await _registerAgent();
+    }
+  }
 
-      print("Hello ${myAgent.data.symbol}!");
+  Future<Agent> _registerAgent() async {
+    String accountToken = Platform.environment[_accountTokenEnvVar]!;
+    _client = ApiClient(
+      authentication: HttpBearerAuth()..accessToken = accountToken
+    );
 
-      context.expose(client);
+    final registerResult = await AccountsApi(_client).register(
+      RegisterRequest(symbol: "5KYT4SUL", faction: FactionSymbol.COSMIC),
+    );
 
-      return client;
+    await agentInfoFile.writeAsString(registerResult!.data.token);
+
+    context.logger.fine("Registered new agent. Written token.");
+
+    _client = ApiClient(
+      authentication: HttpBearerAuth()..accessToken = accountToken
+    );
+    return registerResult.data.agent;
+  }
+
+}
+
+
+KernelService getExtraShipCommunicationService() {
+  return KernelService<_ExtrashipCommunication>(
+    name: "Extra-ship Communications",
+    start: (context) async {
+      final comm = _ExtrashipCommunication(context);
+      final agent = await comm.loadAgent();
+
+      context.logger.info("Hello ${agent.symbol}!");
+
+      context.expose<ApiClient>(comm.client);
+
+      return comm;
     },
-    stop: (client) => client.client.close(),
+    stop: (comm) => comm.client.client.close(),
   );
 }
