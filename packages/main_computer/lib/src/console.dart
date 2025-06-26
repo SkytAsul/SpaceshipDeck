@@ -106,7 +106,7 @@ class SpaceshipConsole {
     if (lineBuffer.isNotEmpty) {
       final line = lineBuffer.toString();
       lineBuffer = "";
-      evaluate(line);
+      await evaluate(line);
     }
 
     showPrompt();
