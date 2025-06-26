@@ -11,6 +11,9 @@ class SpaceshipKernel {
   ApiClient? _apiClient;
   ApiClient get apiClient => _apiClient!;
 
+  bool _started = false;
+  bool get started => _started;
+
   final Map<KernelUnit, _KernelUnitStatus> _units = {};
 
   Iterable<KernelUnit> get units => _units.keys;
@@ -28,16 +31,19 @@ class SpaceshipKernel {
       await loadUnit(unit);
     }
 
+    _started = true;
     _daemon();
   }
 
   void _daemon() async {
-    /*while (false) {
-      // do loop
-    }*/
+    while (_started) {
+      await Future.delayed(Duration(seconds: 5));
+    }
   }
 
   Future<void> shutdown() async {
+    _started = false;
+
     for (var unit in _units.keys) {
       await unloadUnit(unit);
     }
@@ -107,7 +113,6 @@ class SpaceshipKernel {
     var status = _units[unit]!;
     var record = (unit, status);
 
-
     switch (record) {
       case (KernelService(), _KernelServiceStatus()):
         await _unloadService(record.$1, record.$2);
@@ -116,7 +121,6 @@ class SpaceshipKernel {
       case _:
         throw StateError("Mismatched unit and status types");
     }
-
   }
 
   Future<void> _unloadService<T>(
@@ -154,7 +158,7 @@ class KernelUnitContext {
 
   /// Exposes [instance] to all other units. If another instance of the same
   /// type has already been exposed by this unit, [instance] will replace it.
-  /// 
+  ///
   /// In the case of a service, the exposed data will be lost when the service
   /// gets unloaded.
   void expose<T>(T instance) {
@@ -206,10 +210,7 @@ final class KernelCommand implements KernelUnit {
   final String name;
   final FutureOr<void> Function(KernelUnitContext, List<String>) function;
 
-  KernelCommand({
-    required this.name,
-    required this.function,
-  });
+  KernelCommand({required this.name, required this.function});
 }
 
 enum KernelServiceStatus { notLoaded, failed, loaded }
