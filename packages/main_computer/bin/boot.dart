@@ -17,10 +17,7 @@ ArgParser buildParser() {
       negatable: false,
       help: 'Show additional command output.',
     )
-    ..addOption(
-      "agent-token",
-      defaultsTo: Platform.environment["AGENT_TOKEN"]
-    );
+    ..addOption("agent-token", defaultsTo: Platform.environment["AGENT_TOKEN"]);
 }
 
 void printUsage(ArgParser argParser) {
@@ -59,6 +56,6 @@ Future<void> main(List<String> arguments) async {
   final kernel = await loadKernel();
 
   await kernel.boot();
-  await runConsole(kernel);
+  await SpaceshipConsole(kernel: kernel).run();
   await kernel.shutdown();
 }
