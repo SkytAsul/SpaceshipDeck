@@ -23,8 +23,9 @@ Future<void> _helpCommand(KernelUnitContext context, List<String> args) {
   return Future.value(null);
 }
 
-Future<void> _shutdownCommand(KernelUnitContext context, List<String> args) async {
-  await context.kernel.shutdown();
+void _shutdownCommand(KernelUnitContext context, List<String> args) {
+  context.kernel.askShutdown();
+  print("Shutdown initiated.");
 }
 
 Future<void> _agentCommand(KernelUnitContext context, List<String> args) async {

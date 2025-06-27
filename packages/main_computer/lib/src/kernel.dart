@@ -14,6 +14,11 @@ class SpaceshipKernel {
   bool _started = false;
   bool get started => _started;
 
+  bool _shutdownRequested = false;
+
+  final _startedStreamContoller = StreamController<bool>.broadcast();
+  Stream<bool> get startedStream => _startedStreamContoller.stream;
+
   final Map<KernelUnit, _KernelUnitStatus> _units = {};
 
   Iterable<KernelUnit> get units => _units.keys;
@@ -24,29 +29,32 @@ class SpaceshipKernel {
     }
   }
 
-  Future<void> boot() async {
+  Future<void> run() async {
     _logger.info("Booting up...");
 
     for (var unit in _units.keys) {
       await loadUnit(unit);
     }
-
     _started = true;
-    _daemon();
-  }
+    _startedStreamContoller.add(true);
 
-  void _daemon() async {
-    while (_started) {
-      await Future.delayed(Duration(seconds: 5));
-    }
-  }
+    await _loop();
 
-  Future<void> shutdown() async {
+    _startedStreamContoller.add(false);
     _started = false;
-
     for (var unit in _units.keys) {
       await unloadUnit(unit);
     }
+  }
+
+  Future<void> _loop() async {
+    while (!_shutdownRequested) {
+      await Future.delayed(Duration(seconds: 1));
+    }
+  }
+
+  void askShutdown() {
+    _shutdownRequested = true;
   }
 
   KernelCommandCallable? getCommand(String name) {

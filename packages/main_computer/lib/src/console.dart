@@ -3,58 +3,66 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:main_computer/main_computer.dart';
+import 'package:main_computer/src/utils/async.dart';
 
 class SpaceshipConsole {
+  final Stream<List<int>> inputStream;
+  final Stdout outputStream;
   final SpaceshipKernel kernel;
 
   String lineBuffer = "";
   bool exitRequested = false;
 
-  SpaceshipConsole({required this.kernel});
+  SpaceshipConsole(this.inputStream, this.outputStream, {required this.kernel});
 
-  Future<void> run() async {
+  Future<bool> run() async {
     print("\nEnter 'exit' or ^D to exit.");
 
-    stdin.lineMode = false;
-    stdin.echoMode = false;
-
     showPrompt();
-    await for (var codeUnits in stdin) {
-      switch (codeUnits) {
-        case [0x04]:
-          handleExitKey();
-        case [0x09]:
-          handleTab();
-        case [0x0A]:
-          await handleLineBreak();
-        case [0x7F]:
-          handleDel();
-        case [0x1B, 0x5B, 65 || 66]:
-          handleVerticalMovement(codeUnits[2] == 66);
-        case [0x1B, 0x5B, 67 || 68]:
-          handleHorizontalMovement(codeUnits[2] == 67);
-        case [0x1B, ..._]:
-          print("Unhandled escape code: $codeUnits");
-        case [var point] when point <= 31:
-          print("Unhandled control character: $point");
-        case _:
-          handleChar(utf8.decode(codeUnits));
-      }
+    try {
+      await for (var codeUnits in inputStream.stopOn(
+        kernel.startedStream.firstWhere((started) => !started),
+      )) {
+        switch (codeUnits) {
+          case [0x04]:
+            handleExitKey();
+          case [0x09]:
+            handleTab();
+          case [0x0A]:
+            await handleLineBreak();
+          case [0x7F]:
+            handleDel();
+          case [0x1B, 0x5B, 65 || 66]:
+            handleVerticalMovement(codeUnits[2] == 66);
+          case [0x1B, 0x5B, 67 || 68]:
+            handleHorizontalMovement(codeUnits[2] == 67);
+          case [0x1B, ..._]:
+            print("Unhandled escape code: $codeUnits");
+          case [var point] when point <= 31:
+            print("Unhandled control character: $point");
+          case _:
+            handleChar(utf8.decode(codeUnits));
+        }
 
-      if (exitRequested) {
-        break;
+        if (exitRequested) {
+          break;
+        }
       }
+    } on StreamStop {
+      // means the kernel stopped
     }
+
+    return exitRequested;
   }
 
   void showPrompt() {
-    stdout.write("> ");
+    outputStream.write("> ");
   }
 
   void handleExitKey() {
     if (lineBuffer.isEmpty) {
       exitRequested = true;
-      stdout.writeln();
+      outputStream.writeln();
     }
   }
 
@@ -82,12 +90,12 @@ class SpaceshipConsole {
       final cmd = commands[0];
       final completion = cmd.name.substring(commandLabel.length);
       lineBuffer += completion;
-      stdout.write(completion);
+      outputStream.write(completion);
     }
   }
 
   void handleChar(String char) {
-    stdout.write(char);
+    outputStream.write(char);
     lineBuffer += char;
   }
 
@@ -97,19 +105,27 @@ class SpaceshipConsole {
     }
 
     lineBuffer = lineBuffer.substring(0, lineBuffer.length - 1);
-    stdout.write("\x08\x1b[0K");
+    outputStream.write("\x08\x1b[0K");
   }
 
   Future<void> handleLineBreak() async {
-    stdout.writeln();
+    outputStream.writeln();
 
     if (lineBuffer.isNotEmpty) {
       final line = lineBuffer.toString();
       lineBuffer = "";
-      await evaluate(line);
+      try {
+        await evaluate(line);
+      } catch (e, st) {
+        print("An error occurred during the command evaluation.");
+        print(e);
+        print(st);
+      }
     }
 
-    showPrompt();
+    if (!exitRequested) {
+      showPrompt();
+    }
   }
 
   Future<void> evaluate(String line) async {

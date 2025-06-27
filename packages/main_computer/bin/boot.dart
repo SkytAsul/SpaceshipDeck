@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:main_computer/main_computer.dart';
+import 'package:main_computer/src/utils/async.dart';
 
 ArgParser buildParser() {
   return ArgParser()
@@ -53,9 +55,37 @@ Future<void> main(List<String> arguments) async {
     exit(2);
   }*/
 
-  final kernel = await loadKernel();
+  final kernel = await bootKernel();
+  _showConsole(kernel);
+  await kernel.run();
+}
 
-  await kernel.boot();
-  await SpaceshipConsole(kernel: kernel).run();
-  await kernel.shutdown();
+void _showConsole(SpaceshipKernel kernel) async {
+  stdin.lineMode = false;
+  stdin.echoMode = false;
+  StreamSubscription? streamSubscription;
+  final stdinStream = stdin.asBroadcastStream(
+    onListen: (subscription) => streamSubscription = subscription,
+  );
+
+  if (!kernel.started) {
+    await kernel.startedStream.next();
+  }
+
+  while (kernel.started) {
+    try {
+      bool manual = await SpaceshipConsole(stdinStream, stdout, kernel: kernel).run();
+      if (manual) {
+        print("""
+  You tried to exited the console from the bootloader.
+  Use 'shutdown' instead if you want to exit the main spacehip computer.""");
+      }
+    } catch (ex, st) {
+      print("An error occurred in the console.");
+      print(ex);
+      print(st);
+    }
+  }
+
+  await streamSubscription!.cancel();
 }

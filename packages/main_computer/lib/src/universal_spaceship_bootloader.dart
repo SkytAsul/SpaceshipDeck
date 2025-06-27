@@ -21,7 +21,7 @@ void _setupLogging() {
   });
 }
 
-Future<SpaceshipKernel> loadKernel() async {
+Future<SpaceshipKernel> bootKernel() async {
   _setupLogging();
   final logger = Logger("SpaceshipDeck.USB");
 
