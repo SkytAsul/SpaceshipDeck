@@ -2,6 +2,7 @@ import 'dart:async';
 
 extension StreamUtilities<T> on Stream<T> {
 
+  /// Returns a Future which completes with the next event from the Stream.
   Future<T> next() {
     final completer = Completer<T>();
 
@@ -22,6 +23,8 @@ extension StreamUtilities<T> on Stream<T> {
     return completer.future;
   }
 
+  /// Returns a Stream with the same events that this one, but with an added
+  /// [StreamStop] error whenever the passed [future] completes.
   Stream<T> stopOn(Future future) {
     var ctrler = StreamController<T>();
     StreamSubscription? subs;

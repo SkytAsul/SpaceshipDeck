@@ -56,8 +56,21 @@ Future<void> main(List<String> arguments) async {
   }*/
 
   final kernel = await bootKernel();
-  _showConsole(kernel);
+  
+  if (stdin.hasTerminal) {
+    _showConsole(kernel);
+  }
+
+  _catchSigint(kernel);
+  
   await kernel.run();
+}
+
+void _catchSigint(SpaceshipKernel kernel) {
+  ProcessSignal.sigint.watch().next().then((_) async {
+    print("\nReceived SIGINT, shutting down.");
+    kernel.askShutdown();
+  });
 }
 
 void _showConsole(SpaceshipKernel kernel) async {
@@ -77,7 +90,7 @@ void _showConsole(SpaceshipKernel kernel) async {
       bool manual = await SpaceshipConsole(stdinStream, stdout, kernel: kernel).run();
       if (manual) {
         print("""
-  You tried to exited the console from the bootloader.
+  You tried to exit the console from the bootloader.
   Use 'shutdown' instead if you want to exit the main spacehip computer.""");
       }
     } catch (ex, st) {
