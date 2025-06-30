@@ -2,51 +2,39 @@ import 'dart:async';
 
 import 'package:args/args.dart';
 import 'package:main_computer/main_computer.dart';
-import 'package:space_traders/api.dart';
+import 'package:main_computer/src/subsystems/contracts.dart';
+import 'package:main_computer/src/kernel_commands.dart';
 
 List<KernelCommand> getKernelCommands() => [
-  KernelCommand(name: "agent", function: _agentCommand),
-  KernelCommand(name: "help", function: _helpCommand),
-  KernelCommand(name: "shutdown", function: _shutdownCommand),
-  KernelCommand(name: "contract", function: _contractCommand),
+  KernelCommand("help", HelpCommand.new),
+  KernelCommand("shutdown", ShutdownCommand.new),
+  contractsCommand,
 ];
 
-Future<void> _helpCommand(KernelUnitContext context, List<String> args) {
-  final commands = context.kernel.units.whereType<KernelCommand>().toList();
-  commands.sort((c1, c2) => c1.name.compareTo(c2.name));
-  
-  print("Available commands:");
-  for (var command in commands) {
-    print("- ${command.name}");
+class HelpCommand extends KernelCommandRunner {
+  HelpCommand(String label) : super(label, "Shows a list of available commands.");
+
+  @override
+  FutureOr runDefault(ArgResults argResults) {
+    final commands = context!.kernel.units.whereType<KernelCommand>().toList();
+    commands.sort((c1, c2) => c1.name.compareTo(c2.name));
+    
+    print("Available commands:");
+    for (var command in commands) {
+      var commandRunner = command.runnerProvider(command.name);
+      print("- ${command.name}: ${commandRunner.description}");
+    }
+
+    return Future.value(null);
   }
-
-  return Future.value(null);
 }
 
-void _shutdownCommand(KernelUnitContext context, List<String> args) {
-  context.kernel.askShutdown();
-  print("Shutdown initiated.");
-}
+class ShutdownCommand extends KernelCommandRunner {
+  ShutdownCommand(String label) : super(label, "Shuts down the spaceship computer.");
 
-Future<void> _agentCommand(KernelUnitContext context, List<String> args) async {
-  final client = context.kernel.get<ApiClient>();
-  final agent = (await AgentsApi(client).getMyAgent())!.data;
-
-  print(agent);
-}
-
-Future<void> _contractCommand(KernelUnitContext context, List<String> args) async {
-  final parser = ArgParser()
-    ..addCommand("list")
-    ..addCommand("accept");
-  // TODO switch to CommandRunner and move in own file?
-  
-  final results = parser.parse(args.skip(1));
-  if (results.command == null) {
-    print(parser.usage);
-  } else if (results.command!.name == "list") {
-    final contracts = (await ContractsApi(context.kernel.get()).getContracts())!.data;
-    print("Contracts list:");
-    print(contracts.join("\n"));
+  @override
+  FutureOr runDefault(ArgResults argResults) {
+    context?.kernel.askShutdown();
+    print("Shutdown initiated.");
   }
 }

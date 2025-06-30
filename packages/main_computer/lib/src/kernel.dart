@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:logging/logging.dart';
+import 'package:main_computer/src/kernel_commands.dart';
 import 'package:space_traders/api.dart';
-
-typedef KernelCommandCallable = FutureOr<void> Function(List<String>);
 
 class SpaceshipKernel {
   final _logger = Logger("SpaceshipDeck.$SpaceshipKernel");
@@ -57,11 +56,13 @@ class SpaceshipKernel {
     _shutdownRequested = true;
   }
 
-  KernelCommandCallable? getCommand(String name) {
+  KernelCommandRunner? getCommand(String name) {
     for (var unit in _units.keys) {
       if (unit is KernelCommand && unit.name == name) {
         final status = _units[unit]!;
-        return (args) => unit.function(status.context, args);
+        var commandRunner = unit.runnerProvider(name);
+        commandRunner.context = status.context;
+        return commandRunner;
       }
     }
     return null;
@@ -184,7 +185,7 @@ final class KernelService<T> implements KernelUnit {
   final FutureOr<T> Function(KernelUnitContext)? start;
   final FutureOr<void> Function(T)? stop;
 
-  KernelService({required this.name, this.start, required this.stop});
+  KernelService({required this.name, this.start, this.stop});
 
   Future<T?> _callStart(KernelUnitContext context) async {
     if (start != null) {
@@ -216,9 +217,9 @@ final class KernelTimer implements KernelUnit {
 final class KernelCommand implements KernelUnit {
   @override
   final String name;
-  final FutureOr<void> Function(KernelUnitContext, List<String>) function;
+  final KernelCommandRunner Function(String label) runnerProvider;
 
-  KernelCommand({required this.name, required this.function});
+  KernelCommand(this.name, this.runnerProvider);
 }
 
 enum KernelServiceStatus { notLoaded, failed, loaded }

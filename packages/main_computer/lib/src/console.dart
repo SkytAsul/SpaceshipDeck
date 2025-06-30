@@ -141,7 +141,7 @@ class SpaceshipConsole {
     if (command == null) {
       print("Unknown command $commandLabel");
     } else {
-      await command(args);
+      await command.run(args.skip(1));
     }
   }
 }
