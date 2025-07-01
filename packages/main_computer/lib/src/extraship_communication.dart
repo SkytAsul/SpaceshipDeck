@@ -33,6 +33,7 @@ class _ExtrashipCommunication {
   Future<Agent> loadAgent() async {
     if (await agentInfoFile.exists()) {
       var agentToken = await agentInfoFile.readAsString();
+      agentToken = agentToken.trimRight();
 
       _client = ApiClient(
         authentication: HttpBearerAuth()..accessToken = agentToken
@@ -42,12 +43,16 @@ class _ExtrashipCommunication {
         final agentResult = await AgentsApi(_client).getMyAgent();
         return agentResult!.data;
       } on ApiException catch (ex) {
-        if (ex.code == 4113) {
+        _client?.client.close();
+        if (ex.message?.contains('"code":4113') ?? false) {
           context.logger.warning("The agent token is outdated. Generating a new one.");
           return await _registerAgent();
         } else {
           rethrow;
         }
+      } catch (_) {
+        _client?.client.close();
+        rethrow;
       }
     } else {
       return await _registerAgent();
@@ -60,18 +65,23 @@ class _ExtrashipCommunication {
       authentication: HttpBearerAuth()..accessToken = accountToken
     );
 
-    final registerResult = await AccountsApi(_client).register(
-      RegisterRequest(symbol: "5KYT4SUL", faction: FactionSymbol.COSMIC),
-    );
+    try {
+      final registerResult = await AccountsApi(_client).register(
+        RegisterRequest(symbol: "5KYT4SUL", faction: FactionSymbol.COSMIC),
+      );
 
-    await agentInfoFile.writeAsString(registerResult!.data.token);
+      await agentInfoFile.writeAsString(registerResult!.data.token);
 
-    context.logger.fine("Registered new agent. Written token.");
+      context.logger.fine("Registered new agent. Written token.");
 
-    _client = ApiClient(
-      authentication: HttpBearerAuth()..accessToken = accountToken
-    );
-    return registerResult.data.agent;
+      _client = ApiClient(
+        authentication: HttpBearerAuth()..accessToken = accountToken
+      );
+      return registerResult.data.agent;
+    } catch (ex) {
+      _client?.client.close();
+      rethrow;
+    }
   }
 
 }
