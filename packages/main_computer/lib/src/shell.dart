@@ -5,43 +5,44 @@ import 'dart:io';
 import 'package:main_computer/main_computer.dart';
 import 'package:main_computer/src/utils/async.dart';
 
-class SpaceshipConsole {
+class SpaceshipShell {
   final Stream<List<int>> inputStream;
-  final Stdout outputStream;
+  final IOSink outputStream;
   final SpaceshipKernel kernel;
 
   String lineBuffer = "";
   bool exitRequested = false;
 
-  SpaceshipConsole(this.inputStream, this.outputStream, {required this.kernel});
+  SpaceshipShell(this.inputStream, this.outputStream, {required this.kernel});
 
   Future<bool> run() async {
-    print("\nEnter 'exit' or ^D to exit.");
+    outputStream.writeln("\nEnter 'exit' or ^D to exit.");
 
-    showPrompt();
+    _showPrompt();
     try {
       await for (var codeUnits in inputStream.stopOn(
         kernel.startedStream.firstWhere((started) => !started),
       )) {
+        print(codeUnits);
         switch (codeUnits) {
           case [0x04]:
-            handleExitKey();
+            _handleExitKey();
           case [0x09]:
-            handleTab();
+            _handleTab();
           case [0x0A]:
-            await handleLineBreak();
+            await _handleLineBreak();
           case [0x7F]:
-            handleDel();
+            _handleDel();
           case [0x1B, 0x5B, 65 || 66]:
-            handleVerticalMovement(codeUnits[2] == 66);
+            _handleVerticalMovement(codeUnits[2] == 66);
           case [0x1B, 0x5B, 67 || 68]:
-            handleHorizontalMovement(codeUnits[2] == 67);
+            _handleHorizontalMovement(codeUnits[2] == 67);
           case [0x1B, ..._]:
             print("Unhandled escape code: $codeUnits");
           case [var point] when point <= 31:
             print("Unhandled control character: $point");
           case _:
-            handleChar(utf8.decode(codeUnits));
+            _handleChar(utf8.decode(codeUnits));
         }
 
         if (exitRequested) {
@@ -55,26 +56,26 @@ class SpaceshipConsole {
     return exitRequested;
   }
 
-  void showPrompt() {
+  void _showPrompt() {
     outputStream.write("> ");
   }
 
-  void handleExitKey() {
+  void _handleExitKey() {
     if (lineBuffer.isEmpty) {
       exitRequested = true;
       outputStream.writeln();
     }
   }
 
-  void handleVerticalMovement(bool down) {
+  void _handleVerticalMovement(bool down) {
     // TODO history
   }
 
-  void handleHorizontalMovement(bool right) {
+  void _handleHorizontalMovement(bool right) {
     // TODO manage cursor position to prevent going before the prompt
   }
 
-  void handleTab() {
+  void _handleTab() {
     final args = _getArgs(lineBuffer.toString());
     if (args.length != 1) {
       return;
@@ -94,12 +95,12 @@ class SpaceshipConsole {
     }
   }
 
-  void handleChar(String char) {
+  void _handleChar(String char) {
     outputStream.write(char);
     lineBuffer += char;
   }
 
-  void handleDel() {
+  void _handleDel() {
     if (lineBuffer.isEmpty) {
       return;
     }
@@ -108,7 +109,7 @@ class SpaceshipConsole {
     outputStream.write("\x08\x1b[0K");
   }
 
-  Future<void> handleLineBreak() async {
+  Future<void> _handleLineBreak() async {
     outputStream.writeln();
 
     if (lineBuffer.isNotEmpty) {
@@ -117,14 +118,16 @@ class SpaceshipConsole {
       try {
         await evaluate(line);
       } catch (e, st) {
-        print("An error occurred during the command evaluation.");
-        print(e);
-        print(st);
+        outputStream.writeln(
+          "An error occurred during the command evaluation.",
+        );
+        outputStream.writeln(e);
+        outputStream.writeln(st);
       }
     }
 
     if (!exitRequested) {
-      showPrompt();
+      _showPrompt();
     }
   }
 
@@ -139,7 +142,7 @@ class SpaceshipConsole {
 
     final command = kernel.getCommand(commandLabel);
     if (command == null) {
-      print("Unknown command $commandLabel");
+      outputStream.writeln("Unknown command $commandLabel");
     } else {
       await command.run(args.skip(1));
     }
