@@ -26,5 +26,5 @@ Exposes:
 ### Communication Bus
 Receives commands from the rest of the spaceship with gRPC and Protobuf.
 
-Exposes:
-- nothing
+### Remote Control
+Allows connection via Telnet for remote control. The connection is _unsecure_ and is therefore only reachable on the IPv6 loopback address, port 58471.

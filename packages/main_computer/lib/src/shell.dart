@@ -122,22 +122,22 @@ class SpaceshipShell {
   Future<void> _handleLineBreak() async {
     outputStream.writeln();
 
-    if (lineBuffer.isEmpty) {
-      _showPrompt();
-    } else {
-      final line = lineBuffer.toString();
-      lineBuffer = "";
-      await _handleLine(line);
-    }
+    final line = lineBuffer.toString();
+    lineBuffer = "";
+    await _handleLine(line);
   }
 
   Future<void> _handleLine(String line) async {
-    try {
-      await evaluate(line);
-    } catch (e, st) {
-      outputStream.writeln("An error occurred during the command evaluation.");
-      outputStream.writeln(e);
-      outputStream.writeln(st);
+    if (line.isNotEmpty) {
+      try {
+        await evaluate(line);
+      } catch (e, st) {
+        outputStream.writeln(
+          "An error occurred during the command evaluation.",
+        );
+        outputStream.writeln(e);
+        outputStream.writeln(st);
+      }
     }
     if (!exitRequested) {
       _showPrompt();
@@ -156,7 +156,6 @@ class SpaceshipShell {
     final command = kernel.getCommand(commandLabel);
     if (command == null) {
       outputStream.writeln("Unknown command $commandLabel");
-      print(commandLabel.codeUnits);
     } else {
       await command.run(args.skip(1));
     }
