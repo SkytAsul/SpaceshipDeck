@@ -9,11 +9,17 @@ class SpaceshipShell {
   final Stream<List<int>> inputStream;
   final IOSink outputStream;
   final SpaceshipKernel kernel;
+  final bool lineMode;
 
   String lineBuffer = "";
   bool exitRequested = false;
 
-  SpaceshipShell(this.inputStream, this.outputStream, {required this.kernel});
+  SpaceshipShell(
+    this.inputStream,
+    this.outputStream, {
+    required this.kernel,
+    this.lineMode = false,
+  });
 
   Future<bool> run() async {
     outputStream.writeln("\nEnter 'exit' or ^D to exit.");
@@ -23,7 +29,6 @@ class SpaceshipShell {
       await for (var codeUnits in inputStream.stopOn(
         kernel.startedStream.firstWhere((started) => !started),
       )) {
-        print(codeUnits);
         switch (codeUnits) {
           case [0x04]:
             _handleExitKey();
@@ -42,7 +47,7 @@ class SpaceshipShell {
           case [var point] when point <= 31:
             print("Unhandled control character: $point");
           case _:
-            _handleChar(utf8.decode(codeUnits));
+            _handleChars(utf8.decode(codeUnits));
         }
 
         if (exitRequested) {
@@ -64,6 +69,7 @@ class SpaceshipShell {
     if (lineBuffer.isEmpty) {
       exitRequested = true;
       outputStream.writeln();
+      print("exit");
     }
   }
 
@@ -95,9 +101,13 @@ class SpaceshipShell {
     }
   }
 
-  void _handleChar(String char) {
-    outputStream.write(char);
-    lineBuffer += char;
+  Future<void> _handleChars(String chars) async {
+    if (lineMode) {
+      await _handleLine(chars.trimRight());
+    } else {
+      outputStream.write(chars);
+      lineBuffer += chars;
+    }
   }
 
   void _handleDel() {
@@ -112,20 +122,23 @@ class SpaceshipShell {
   Future<void> _handleLineBreak() async {
     outputStream.writeln();
 
-    if (lineBuffer.isNotEmpty) {
+    if (lineBuffer.isEmpty) {
+      _showPrompt();
+    } else {
       final line = lineBuffer.toString();
       lineBuffer = "";
-      try {
-        await evaluate(line);
-      } catch (e, st) {
-        outputStream.writeln(
-          "An error occurred during the command evaluation.",
-        );
-        outputStream.writeln(e);
-        outputStream.writeln(st);
-      }
+      await _handleLine(line);
     }
+  }
 
+  Future<void> _handleLine(String line) async {
+    try {
+      await evaluate(line);
+    } catch (e, st) {
+      outputStream.writeln("An error occurred during the command evaluation.");
+      outputStream.writeln(e);
+      outputStream.writeln(st);
+    }
     if (!exitRequested) {
       _showPrompt();
     }
@@ -143,6 +156,7 @@ class SpaceshipShell {
     final command = kernel.getCommand(commandLabel);
     if (command == null) {
       outputStream.writeln("Unknown command $commandLabel");
+      print(commandLabel.codeUnits);
     } else {
       await command.run(args.skip(1));
     }

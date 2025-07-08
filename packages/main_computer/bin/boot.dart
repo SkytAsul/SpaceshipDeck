@@ -10,7 +10,7 @@ Future<void> main() async {
   final kernel = await bootKernel();
 
   if (stdin.hasTerminal) {
-    _showConsole(kernel);
+    _showConsole(kernel, lineMode: false);
   }
 
   _catchSigint(kernel);
@@ -34,9 +34,9 @@ void _catchSigint(SpaceshipKernel kernel) {
       });
 }
 
-void _showConsole(SpaceshipKernel kernel) async {
-  stdin.lineMode = false;
-  stdin.echoMode = false;
+void _showConsole(SpaceshipKernel kernel, {bool lineMode = false}) async {
+  stdin.lineMode = lineMode;
+  stdin.echoMode = lineMode;
   StreamSubscription? streamSubscription;
   final stdinStream = stdin.asBroadcastStream(
     onListen: (subscription) => streamSubscription = subscription,
@@ -52,6 +52,7 @@ void _showConsole(SpaceshipKernel kernel) async {
         stdinStream,
         stdout,
         kernel: kernel,
+        lineMode: lineMode,
       ).run();
       if (manualExit) {
         print("""
