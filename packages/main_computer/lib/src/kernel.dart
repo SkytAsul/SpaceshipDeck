@@ -4,6 +4,8 @@ import 'package:logging/logging.dart';
 import 'package:main_computer/src/kernel_commands.dart';
 import 'package:space_traders/api.dart';
 
+export 'kernel_commands.dart';
+
 class SpaceshipKernel {
   final _logger = Logger("SpaceshipDeck.$SpaceshipKernel");
 
