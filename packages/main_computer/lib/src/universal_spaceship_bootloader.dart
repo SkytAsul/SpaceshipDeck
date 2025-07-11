@@ -9,6 +9,7 @@ import 'package:main_computer/src/remote_control.dart';
 import 'package:main_computer/src/subsystems/agent.dart';
 import 'package:main_computer/src/subsystems/contracts.dart';
 import 'package:main_computer/src/subsystems/factions.dart';
+import 'package:main_computer/src/subsystems/galaxy.dart';
 
 void _setupLogging() {
   hierarchicalLoggingEnabled = true;
@@ -40,6 +41,7 @@ Future<SpaceshipKernel> bootKernel() async {
       getAgentService(),
       getFactionsService(),
       getContractsService(),
+      getGalaxyService(),
       ...getKernelCommands(),
     ],
   );
