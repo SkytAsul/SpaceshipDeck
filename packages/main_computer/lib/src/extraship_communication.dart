@@ -22,9 +22,11 @@ class SpaceTradersApiGenerator {}
 class _ExtrashipCommunication {
   static const _accountTokenEnvVar = "SPACETRADERSAPI_TOKEN";
 
-  final agentInfoFile = File("${Platform.environment["HOME"]}/.spaceship_agent");
+  final agentInfoFile = File(
+    "${Platform.environment["HOME"]}/.spaceship_agent",
+  );
   final KernelUnitContext context;
-  
+
   ApiClient? _client;
   ApiClient get client => _client!;
 
@@ -36,7 +38,7 @@ class _ExtrashipCommunication {
       agentToken = agentToken.trimRight();
 
       _client = ApiClient(
-        authentication: HttpBearerAuth()..accessToken = agentToken
+        authentication: HttpBearerAuth()..accessToken = agentToken,
       );
 
       try {
@@ -45,7 +47,9 @@ class _ExtrashipCommunication {
       } on ApiException catch (ex) {
         _client?.client.close();
         if (ex.message?.contains('"code":4113') ?? false) {
-          context.logger.warning("The agent token is outdated. Generating a new one.");
+          context.logger.warning(
+            "The agent token is outdated. Generating a new one.",
+          );
           return await _registerAgent();
         } else {
           rethrow;
@@ -62,20 +66,21 @@ class _ExtrashipCommunication {
   Future<Agent> _registerAgent() async {
     String accountToken = Platform.environment[_accountTokenEnvVar]!;
     _client = ApiClient(
-      authentication: HttpBearerAuth()..accessToken = accountToken
+      authentication: HttpBearerAuth()..accessToken = accountToken,
     );
 
     try {
       final registerResult = await AccountsApi(_client).register(
-        RegisterRequest(symbol: "5KYT4SUL", faction: FactionSymbol.COSMIC),
+        RegisterRequest(symbol: "5KYT4SULL", faction: FactionSymbol.COSMIC),
       );
 
-      await agentInfoFile.writeAsString(registerResult!.data.token);
+      final agentToken = registerResult!.data.token;
+      await agentInfoFile.writeAsString(agentToken);
 
       context.logger.fine("Registered new agent. Written token.");
 
       _client = ApiClient(
-        authentication: HttpBearerAuth()..accessToken = accountToken
+        authentication: HttpBearerAuth()..accessToken = agentToken,
       );
       return registerResult.data.agent;
     } catch (ex) {
@@ -83,9 +88,7 @@ class _ExtrashipCommunication {
       rethrow;
     }
   }
-
 }
-
 
 KernelService getExtraShipCommunicationService() {
   return KernelService<_ExtrashipCommunication>(
