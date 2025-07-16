@@ -1,8 +1,4 @@
-import 'dart:async';
-
-import 'package:args/src/arg_results.dart';
-import 'package:main_computer/main_computer.dart';
-import 'package:space_traders/api.dart';
+part of 'subsystems.dart';
 
 KernelService getAgentService() => KernelService(
   name: "Agent Subsystem",
@@ -34,15 +30,15 @@ class AgentSubsystem {
   }
 }
 
-final agentCommand = KernelCommand("agent", _getCommand);
-
-KernelCommandRunner _getCommand(String label) => _AgentCommand(label);
+final agentCommand = KernelCommand("agent", _AgentCommand.new);
 
 class _AgentCommand extends KernelCommandRunner {
   AgentSubsystem? get subsystem => context?.kernel.get();
 
   _AgentCommand(String label)
-    : super(label, "Shows information about the agent.");
+    : super(label, "Show information about the agent.") {
+    addCommand(_HeadquartersSubcommand());
+  }
 
   @override
   FutureOr runDefault(ArgResults argResults) {
@@ -54,5 +50,22 @@ Credits: ${agent.credits}
 Starting faction: ${agent.startingFaction}
 Ship count: ${agent.shipCount}
 """);
+  }
+}
+
+class _HeadquartersSubcommand extends KernelSubcommand {
+  AgentSubsystem? get subsystem => context?.kernel.get();
+
+  _HeadquartersSubcommand()
+    : super("headquarters", "Display headquarters description.");
+
+  @override
+  FutureOr? run() async {
+    final waypoint = await context!.kernel.get<GalaxySubsystem>()!.getWaypoint(
+      subsystem!.agent.headquarters,
+    );
+
+    print("My headquarters:");
+    print(waypoint);
   }
 }

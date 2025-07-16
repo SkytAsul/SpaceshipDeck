@@ -2,14 +2,10 @@ import 'dart:async';
 
 import 'package:args/args.dart';
 import 'package:main_computer/main_computer.dart';
-import 'package:main_computer/src/subsystems/agent.dart';
-import 'package:main_computer/src/subsystems/contracts.dart';
 
 List<KernelCommand> getKernelCommands() => [
   KernelCommand("help", HelpCommand.new),
   KernelCommand("shutdown", ShutdownCommand.new),
-  contractsCommand,
-  agentCommand,
 ];
 
 class HelpCommand extends KernelCommandRunner {

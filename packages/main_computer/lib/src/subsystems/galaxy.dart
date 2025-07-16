@@ -1,5 +1,4 @@
-import 'package:main_computer/main_computer.dart';
-import 'package:space_traders/api.dart';
+part of 'subsystems.dart';
 
 KernelService getGalaxyService() => KernelService(
   name: "Galaxy Subsystem",
@@ -13,7 +12,8 @@ KernelService getGalaxyService() => KernelService(
 class GalaxySubsystem {
   final KernelUnitContext _context;
 
-  SystemsApi get _client {
+  @protected
+  SystemsApi get client {
     final apiClient = _context.kernel.get<ApiClient>();
     return apiClient != null
         ? SystemsApi(apiClient)
@@ -21,6 +21,8 @@ class GalaxySubsystem {
   }
 
   final _cachedSystems = <String, System>{};
+
+  final _cachedWaypoints = <String, Waypoint>{};
 
   GalaxySubsystem(this._context);
 
@@ -30,8 +32,25 @@ class GalaxySubsystem {
       return system;
     }
 
-    system = (await _client.getSystem(symbol))!.data;
+    system = (await client.getSystem(symbol))!.data;
     _cachedSystems[symbol] = system;
     return system;
+  }
+
+  String getSystemFromWaypoint(String waypointSymbol) =>
+      waypointSymbol.substring(0, waypointSymbol.lastIndexOf("-"));
+
+  Future<Waypoint?> getWaypoint(String waypointSymbol) async {
+    var waypoint = _cachedWaypoints[waypointSymbol];
+    if (waypoint != null) {
+      return waypoint;
+    }
+
+    waypoint = (await client.getWaypoint(
+      getSystemFromWaypoint(waypointSymbol),
+      waypointSymbol,
+    ))!.data;
+    _cachedWaypoints[waypointSymbol] = waypoint;
+    return waypoint;
   }
 }

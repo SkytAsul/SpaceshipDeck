@@ -1,5 +1,4 @@
-import 'package:main_computer/main_computer.dart';
-import 'package:space_traders/api.dart';
+part of 'subsystems.dart';
 
 KernelService getFactionsService() => KernelService(
   name: "Factions Subsystem",
