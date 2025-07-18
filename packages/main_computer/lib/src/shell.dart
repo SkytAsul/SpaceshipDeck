@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:args/command_runner.dart';
 import 'package:main_computer/main_computer.dart';
 import 'package:main_computer/src/utils/async.dart';
+import 'package:stack_trace/stack_trace.dart';
 
 class SpaceshipShell {
   final Stream<List<int>> inputStream;
@@ -131,17 +133,33 @@ class SpaceshipShell {
     if (line.isNotEmpty) {
       try {
         await evaluate(line);
+      } on UsageException catch (ex) {
+        outputStream.writeln(ex);
       } catch (e, st) {
         outputStream.writeln(
           "An error occurred during the command evaluation.",
         );
         outputStream.writeln(e);
-        outputStream.writeln(st);
+        outputStream.writeln(_prettifyStackTrace(st));
       }
+      outputStream.writeln();
     }
     if (!exitRequested) {
       _showPrompt();
     }
+  }
+
+  Trace _prettifyStackTrace(StackTrace st){
+    var frames = Trace.from(st).terse.frames;
+    for (int i = frames.length - 1; i >= 0; i--) {
+      var frame = frames[i];
+      if (frame.member == "SpaceshipShell._handleLine") {
+        frames = frames.sublist(0, i);
+        break;
+      }
+    }
+
+    return Trace(frames);
   }
 
   Future<void> evaluate(String line) async {
