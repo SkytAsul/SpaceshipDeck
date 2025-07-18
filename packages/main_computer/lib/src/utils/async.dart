@@ -1,7 +1,8 @@
 import 'dart:async';
 
-extension StreamUtilities<T> on Stream<T> {
+import 'package:space_traders/api.dart';
 
+extension StreamUtilities<T> on Stream<T> {
   /// Returns a Future which completes with the next event from the Stream.
   Future<T> next() {
     final completer = Completer<T>();
@@ -18,7 +19,6 @@ extension StreamUtilities<T> on Stream<T> {
     sub.onDone(() {
       completer.completeError("noData");
     });
-    
 
     return completer.future;
   }
@@ -41,9 +41,26 @@ extension StreamUtilities<T> on Stream<T> {
     };
     return ctrler.stream;
   }
-
 }
 
 class StreamStop implements Exception {
   const StreamStop();
+}
+
+Stream<T> paginationToStream<T, R>(
+  Future<R> Function(int page, int limit) search,
+  Iterable<T> Function(R) extractItems,
+  Meta Function(R) extractMeta, {
+  int limit = 20,
+}) async* {
+  int page = 1;
+  int total = 1;
+  while ((page - 1) * limit < total) {
+    var result = await search(page, limit);
+    total = extractMeta(result).total;
+    for (var item in extractItems(result)) {
+      yield item;
+    }
+    page++;
+  }
 }

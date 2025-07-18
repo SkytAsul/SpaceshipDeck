@@ -53,4 +53,20 @@ class GalaxySubsystem {
     _cachedWaypoints[waypointSymbol] = waypoint;
     return waypoint;
   }
+
+  Stream<Waypoint> listWaypoints(
+    String systemSymbol, {
+    List<WaypointTraitSymbol>? traits,
+  }) {
+    return paginationToStream(
+      (page, limit) => client.getSystemWaypoints(
+        systemSymbol,
+        page: page,
+        limit: limit,
+        traits: traits,
+      ),
+      (rep) => rep!.data,
+      (rep) => rep!.meta,
+    );
+  }
 }

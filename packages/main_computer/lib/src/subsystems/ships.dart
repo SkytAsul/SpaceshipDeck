@@ -56,7 +56,7 @@ class _ShipListCommand extends KernelSubcommand {
 }
 
 class _ShipyardCommand extends KernelSubcommand {
-  ShipsSubsystem? get subsystem => context?.kernel.get();
+  ShipsSubsystem? get subsystem => get();
 
   _ShipyardCommand() : super("shipyard", "Show shipyard information.");
 
@@ -64,7 +64,14 @@ class _ShipyardCommand extends KernelSubcommand {
   FutureOr? run() async {
     final ships = await subsystem!.getMyShips();
 
-    // find intersection between shipyards in the systems of the ships and the
-    // waypoints the ships are on
+    final systems = ships.map((ship) => ship.nav.systemSymbol).toSet();
+
+    for (var system in systems) {
+      final systemShipyards = await get<GalaxySubsystem>()!
+          .listWaypoints(system, traits: [WaypointTraitSymbol.SHIPYARD])
+          .toList();
+      print("*Shipyards in $system : (${systemShipyards.length})");
+      print(systemShipyards.map((shipyard) => "- $shipyard").join("\n"));
+    }
   }
 }

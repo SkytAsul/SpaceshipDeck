@@ -20,16 +20,17 @@ class KernelCommandRunner<T> extends CommandRunner<T> {
   FutureOr<T?> runDefault(ArgResults argResults) {
     return super.runCommand(argResults);
   }
-
 }
 
 abstract class KernelSubcommand<T> extends Command<T> {
-
-  KernelUnitContext? get context => (runner as KernelCommandRunner<T>?)?.context;
+  KernelUnitContext? get context =>
+      (runner as KernelCommandRunner<T>?)?.context;
 
   @override
   final String name, description;
 
   KernelSubcommand(this.name, this.description);
 
-} 
+  /// Utility method to get an exposed object from the kernel.
+  A? get<A>() => context?.kernel.get<A>();
+}
