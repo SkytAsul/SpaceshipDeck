@@ -48,8 +48,7 @@ class _AgentCommand extends KernelCommandRunner {
 Headquarters: ${agent.headquarters}
 Credits: ${agent.credits}
 Starting faction: ${agent.startingFaction}
-Ship count: ${agent.shipCount}
-""");
+Ship count: ${agent.shipCount}""");
   }
 }
 

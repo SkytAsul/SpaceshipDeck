@@ -64,6 +64,10 @@ class _ExtrashipCommunication {
   }
 
   Future<Agent> _registerAgent() async {
+    if (!Platform.environment.containsKey(_accountTokenEnvVar)) {
+      throw Exception("$_accountTokenEnvVar is not defined");
+    }
+
     String accountToken = Platform.environment[_accountTokenEnvVar]!;
     _client = ApiClient(
       authentication: HttpBearerAuth()..accessToken = accountToken,
