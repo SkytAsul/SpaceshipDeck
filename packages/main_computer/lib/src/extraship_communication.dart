@@ -75,7 +75,7 @@ class _ExtrashipCommunication {
 
     try {
       final registerResult = await AccountsApi(_client).register(
-        RegisterRequest(symbol: "5KYT4SULL", faction: FactionSymbol.COSMIC),
+        RegisterRequest(symbol: "5KYT4SUL", faction: FactionSymbol.COSMIC),
       );
 
       final agentToken = registerResult!.data.token;

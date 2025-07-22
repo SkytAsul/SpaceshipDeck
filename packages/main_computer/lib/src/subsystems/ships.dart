@@ -32,13 +32,23 @@ class ShipsSubsystem {
       waypointSymbol,
     ))!.data;
   }
+
+  Future<Ship> purchaseShip(ShipType type, String shipyardSymbol) async {
+    var result = (await _client.purchaseShip(
+      PurchaseShipRequest(shipType: type, waypointSymbol: shipyardSymbol),
+    ))!.data;
+
+    _context.kernel.get<AgentSubsystem>()!._agent = result.agent;
+    return result.ship;
+  }
 }
 
 final shipsCommand = KernelCommand(
   "ship",
   (String label) => KernelCommandRunner(label, "Control the ships.")
     ..addCommand(_ShipListCommand())
-    ..addCommand(_ShipyardCommand()),
+    ..addCommand(_ShipyardCommand())
+    ..addCommand(_ShipPurchaseCommand()),
 );
 
 class _ShipListCommand extends KernelSubcommand {
@@ -50,15 +60,24 @@ class _ShipListCommand extends KernelSubcommand {
   FutureOr? run() async {
     final myShips = await subsystem!.getMyShips();
 
-    print("Fleet status:");
-    print(myShips);
+    print("Fleet status (${myShips.length}):");
+    for (var ship in myShips) {
+      print("- $ship");
+    }
   }
 }
 
 class _ShipyardCommand extends KernelSubcommand {
+  _ShipyardCommand() : super("shipyard", "") {
+    addSubcommand(_ShipyardListSubcommand());
+    addSubcommand(_ShipyardInfoSubcommand());
+  }
+}
+
+class _ShipyardListSubcommand extends KernelSubcommand {
   ShipsSubsystem? get subsystem => get();
 
-  _ShipyardCommand() : super("shipyard", "Show shipyard information.");
+  _ShipyardListSubcommand() : super("list", "List shipyards.");
 
   @override
   FutureOr? run() async {
@@ -73,5 +92,47 @@ class _ShipyardCommand extends KernelSubcommand {
       print("*Shipyards in $system : (${systemShipyards.length})");
       print(systemShipyards.map((shipyard) => "- $shipyard").join("\n"));
     }
+  }
+}
+
+class _ShipyardInfoSubcommand extends KernelSubcommand {
+  ShipsSubsystem get subsystem => get()!;
+
+  _ShipyardInfoSubcommand() : super("info", "Show shipyard informations.") {
+    argParser.addOption("shipyard", mandatory: true);
+  }
+
+  @override
+  FutureOr? run() async {
+    final shipyardSymbol = argResults!.option("shipyard")!;
+
+    final shipyard = await subsystem.getShipyard(shipyardSymbol);
+    print("Information about shipyard *$shipyardSymbol*:\n$shipyard");
+  }
+}
+
+class _ShipPurchaseCommand extends KernelSubcommand {
+  ShipsSubsystem get subsystem => get()!;
+
+  _ShipPurchaseCommand() : super("purchase", "Purchase a ship.") {
+    argParser.addOption(
+      "type",
+      mandatory: true,
+      allowed: ShipType.values.map((type) => type.value),
+    );
+    argParser.addOption("shipyard", mandatory: true);
+  }
+
+  @override
+  FutureOr? run() async {
+    final typeName = argResults!.option("type");
+    final type = ShipType.values.singleWhere((type) => type.value == typeName);
+
+    final shipyardSymbol = argResults!.option("shipyard")!;
+
+    print("Purchasing a $typeName from $shipyardSymbol...");
+    final ship = await subsystem.purchaseShip(type, shipyardSymbol);
+
+    print("Purchased ship!\n$ship");
   }
 }
