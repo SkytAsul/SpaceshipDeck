@@ -3,7 +3,12 @@ final _structRegex = RegExp(
 );
 final _paramRegex = RegExp(r"^\s*\w+?=");
 
-String indent(int level) => "  " * level;
+String _indent(int level) => "  " * level;
+
+extension ObjectStringFormat on Object {
+  /// Formats the string representation of this object.
+  String toFormattedString() => format(toString());
+}
 
 /// Formats a compact structured string to a pretty, multi-line, indented one.
 ///
@@ -34,16 +39,18 @@ String format(String structuredString) {
         } else {
           formatted = " $formatted";
         }
-        builtString += "\n${indent(level + 1)}$key:$formatted";
+        builtString += "\n${_indent(level + 1)}$key:$formatted";
       }
     }
     return (builtString, false);
   } else {
+    var items = matcher.namedGroup("list")!;
+    if (items.trim().isEmpty) {
+      return ("[]", false);
+    }
     return (
-      matcher
-          .namedGroup("list")!
-          .split(",")
-          .map((line) => "${indent(level)}- ${_format(line.trim(), level).$1}")
+      _parseListItems(items)
+          .map((line) => "${_indent(level)}- ${_format(line.trim(), level).$1}")
           .join("\n"),
       true,
     );
@@ -89,5 +96,31 @@ List<(String, String)> _parseParameters(String params) {
   } else if (key.isNotEmpty) {
     throw Exception("Unfinished parameter $key");
   }
+  return parsed;
+}
+
+List<String> _parseListItems(String list) {
+  int depth = 0;
+  List<String> parsed = [];
+
+  String value = "";
+  for (var codeUnit in list.codeUnits) {
+    switch (codeUnit) {
+      case 91: // [
+        depth++;
+        value += "[";
+      case 93: // ]
+        depth--;
+        value += "]";
+      case 44 when depth == 0: // ,
+        // value end
+        parsed.add(value.trim());
+        value = "";
+      case _:
+        value += String.fromCharCode(codeUnit);
+    }
+  }
+
+  parsed.add(value);
   return parsed;
 }

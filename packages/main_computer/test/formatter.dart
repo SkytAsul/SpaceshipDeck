@@ -7,11 +7,26 @@ void main() {
     expect(format("Object[]"), "Object");
   });
 
+  test("Empty list", () {
+    expect(format("[]"), "[]");
+    expect(format("Object[key=[]]"), """
+Object
+  key: []""");
+  });
+
   test("List without recursion", () {
     expect(format("[a, b, c]"), """
 - a
 - b
 - c""");
+  });
+
+  test("List with recursion", () {
+    expect(format("[a, b[c=1, d=2]]"), """
+- a
+- b
+  c: 1
+  d: 2""");
   });
 
   test("Simple object without recursion", () {
