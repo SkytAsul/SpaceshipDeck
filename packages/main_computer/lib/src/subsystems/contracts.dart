@@ -90,7 +90,7 @@ class _ContractNegotiateSubcommand extends KernelSubcommand {
     print("Negotiating a new contract with ship *$shipSymbol*...");
 
     final contract = await subsystem!.negotiateContract(shipSymbol);
-    print("New contract received: $contract");
+    print("New contract received:\n${contract.toFormattedString()}");
   }
 }
 

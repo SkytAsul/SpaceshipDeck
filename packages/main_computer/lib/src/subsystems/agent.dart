@@ -65,6 +65,6 @@ class _HeadquartersSubcommand extends KernelSubcommand {
     );
 
     print("My headquarters:");
-    print(waypoint);
+    print(waypoint?.toFormattedString());
   }
 }

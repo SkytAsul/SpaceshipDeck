@@ -61,9 +61,7 @@ class _ShipListCommand extends KernelSubcommand {
     final myShips = await subsystem!.getMyShips();
 
     print("Fleet status (${myShips.length}):");
-    for (var ship in myShips) {
-      print("- $ship");
-    }
+    print(myShips.toFormattedString());
   }
 }
 
@@ -90,7 +88,7 @@ class _ShipyardListSubcommand extends KernelSubcommand {
           .listWaypoints(system, traits: [WaypointTraitSymbol.SHIPYARD])
           .toList();
       print("*Shipyards in $system : (${systemShipyards.length})");
-      print(systemShipyards.map((shipyard) => "- $shipyard").join("\n"));
+      print(systemShipyards.toFormattedString());
     }
   }
 }
@@ -107,7 +105,8 @@ class _ShipyardInfoSubcommand extends KernelSubcommand {
     final shipyardSymbol = argResults!.option("shipyard")!;
 
     final shipyard = await subsystem.getShipyard(shipyardSymbol);
-    print("Information about shipyard *$shipyardSymbol*:\n$shipyard");
+    print("Information about shipyard *$shipyardSymbol*:");
+    print(shipyard.toFormattedString());
   }
 }
 
@@ -133,6 +132,7 @@ class _ShipPurchaseCommand extends KernelSubcommand {
     print("Purchasing a $typeName from $shipyardSymbol...");
     final ship = await subsystem.purchaseShip(type, shipyardSymbol);
 
-    print("Purchased ship!\n$ship");
+    print("Purchased ship!");
+    print(ship.toFormattedString());
   }
 }
