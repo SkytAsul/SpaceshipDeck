@@ -29,7 +29,11 @@ extension StreamUtilities<T> on Stream<T> {
     var ctrler = StreamController<T>();
     StreamSubscription? subs;
     ctrler.onListen = () {
-      future.then((_) => ctrler.addError(StreamStop()));
+      future.then((_) {
+        if (!ctrler.isClosed) {
+          ctrler.addError(StreamStop());
+        }
+      });
       subs = listen(
         (event) => ctrler.add(event),
         onError: (error, st) => ctrler.addError(error, st),
