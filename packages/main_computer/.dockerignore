@@ -1,0 +1,7 @@
+.dockerignore
+Dockerfile
+README.md
+test/
+build/
+.dart_tool/
+.gitignore
