@@ -6,6 +6,7 @@ import 'package:main_computer/src/commands.dart';
 import 'package:main_computer/src/communication_bus/communication_bus.dart';
 import 'package:main_computer/src/extraship_communication.dart';
 import 'package:main_computer/src/remote_control.dart';
+import 'package:main_computer/src/storage.dart';
 import 'package:main_computer/src/subsystems/subsystems.dart';
 
 void _setupLogging() {
@@ -32,6 +33,7 @@ Future<SpaceshipKernel> bootKernel() async {
 
   final kernel = SpaceshipKernel(
     units: [
+      getStorageService(),
       getCommunicationBusService(),
       getExtraShipCommunicationService(),
       getRemoteControlService(),

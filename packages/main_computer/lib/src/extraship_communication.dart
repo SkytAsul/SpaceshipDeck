@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:main_computer/src/kernel.dart';
 import 'package:openapi_generator_annotations/openapi_generator_annotations.dart';
+import 'package:sembast/sembast.dart';
+import 'package:sembast/timestamp.dart';
 import 'package:space_traders/api.dart';
 
 @Openapi(
@@ -22,9 +24,6 @@ class SpaceTradersApiGenerator {}
 class _ExtrashipCommunication {
   static const _accountTokenEnvVar = "SPACETRADERSAPI_TOKEN";
 
-  final agentInfoFile = File(
-    "${Platform.environment["HOME"]}/.spaceship_agent",
-  );
   final KernelUnitContext context;
 
   ApiClient? _client;
@@ -33,37 +32,49 @@ class _ExtrashipCommunication {
   _ExtrashipCommunication(this.context);
 
   Future<Agent> loadAgent() async {
-    if (await agentInfoFile.exists()) {
-      var agentToken = await agentInfoFile.readAsString();
-      agentToken = agentToken.trimRight();
+    var db = context.kernel.get<Database>()!;
+    var tokensStore = intMapStoreFactory.store("stapi_tokens");
 
-      _client = ApiClient(
-        authentication: HttpBearerAuth()..accessToken = agentToken,
-      );
+    Future<Agent> generateToken() async {
+      var (agent, token) = await _registerAgent();
+      await tokensStore.add(db, {"token": token, "timestamp": Timestamp.now()});
+      return agent;
+    }
 
-      try {
-        final agentResult = await AgentsApi(_client).getMyAgent();
-        return agentResult!.data;
-      } on ApiException catch (ex) {
-        _client?.client.close();
-        if (ex.message?.contains('"code":4113') ?? false) {
-          context.logger.warning(
-            "The agent token is outdated. Generating a new one.",
-          );
-          return await _registerAgent();
-        } else {
-          rethrow;
-        }
-      } catch (_) {
-        _client?.client.close();
+    var lastTokenRecord = await tokensStore.findFirst(
+      db,
+      finder: Finder(sortOrders: [SortOrder("timestamp", false)]),
+    );
+
+    if (lastTokenRecord == null) {
+      return generateToken();
+    }
+
+    _client = ApiClient(
+      authentication: HttpBearerAuth()
+        ..accessToken = lastTokenRecord.value["token"],
+    );
+
+    try {
+      final agentResult = await AgentsApi(_client).getMyAgent();
+      return agentResult!.data;
+    } on ApiException catch (ex) {
+      _client?.client.close();
+      if (ex.message?.contains('"code":4113') ?? false) {
+        context.logger.warning(
+          "The agent token is outdated. Generating a new one.",
+        );
+        return await generateToken();
+      } else {
         rethrow;
       }
-    } else {
-      return await _registerAgent();
+    } catch (_) {
+      _client?.client.close();
+      rethrow;
     }
   }
 
-  Future<Agent> _registerAgent() async {
+  Future<(Agent, String token)> _registerAgent() async {
     if (!Platform.environment.containsKey(_accountTokenEnvVar)) {
       throw Exception("$_accountTokenEnvVar is not defined");
     }
@@ -79,14 +90,13 @@ class _ExtrashipCommunication {
       );
 
       final agentToken = registerResult!.data.token;
-      await agentInfoFile.writeAsString(agentToken);
 
       context.logger.fine("Registered new agent. Written token.");
 
       _client = ApiClient(
         authentication: HttpBearerAuth()..accessToken = agentToken,
       );
-      return registerResult.data.agent;
+      return (registerResult.data.agent, agentToken);
     } catch (ex) {
       _client?.client.close();
       rethrow;
