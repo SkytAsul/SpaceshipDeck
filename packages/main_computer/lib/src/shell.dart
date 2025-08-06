@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:args/command_runner.dart';
 import 'package:main_computer/main_computer.dart';
 import 'package:main_computer/src/utils/async.dart';
+import 'package:sembast/sembast_memory.dart';
+import 'package:sembast/timestamp.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 /// From https://v2test.asciiart.website/art/2526, https://emojicombos.com/solar-system-ascii-art
@@ -69,20 +71,27 @@ class SpaceshipShell {
   final IOSink outputStream;
   final SpaceshipKernel kernel;
   final bool lineMode;
+  final ShellHistoryManager history;
 
   String lineBuffer = "";
   bool exitRequested = false;
+  int? historyIndex;
 
   SpaceshipShell(
     this.inputStream,
     this.outputStream, {
     required this.kernel,
     this.lineMode = false,
-  });
+  }) : history = ShellHistoryManager(kernel.get()!);
 
   Future<bool> run() async {
     _showGreetings();
     _showPrompt();
+
+    // history loading is fast so the user won't notice the time it takes
+    // between the display of the prompt and when the user input is echoed
+    await history.load();
+
     try {
       await for (var codeUnits in inputStream.stopOn(
         kernel.startedStream.firstWhere((started) => !started),
@@ -96,6 +105,8 @@ class SpaceshipShell {
             await _handleLineBreak();
           case [0x7F]:
             _handleDel();
+          case [0x15]:
+            _eraseInput();
           case [0x1B, 0x5B, 65 || 66]:
             _handleVerticalMovement(codeUnits[2] == 66);
           case [0x1B, 0x5B, 67 || 68]:
@@ -127,12 +138,40 @@ class SpaceshipShell {
     if (lineBuffer.isEmpty) {
       exitRequested = true;
       outputStream.writeln();
-      print("exit");
     }
   }
 
   void _handleVerticalMovement(bool down) {
-    // TODO history
+    int toDisplay;
+    if (historyIndex == null) {
+      if (lineBuffer.isNotEmpty) {
+        // do not overwrite input if its the first time accessing the history
+        return;
+      }
+
+      if (history.commands.isEmpty || down) {
+        return;
+      }
+
+      toDisplay = history.commands.length - 1;
+    } else {
+      toDisplay = historyIndex! + (down ? 1 : -1);
+    }
+
+    if (toDisplay < 0) {
+      return;
+    }
+    if (toDisplay >= history.commands.length) {
+      historyIndex = null;
+      _eraseInput();
+      return;
+    }
+
+    historyIndex = toDisplay;
+    _eraseInput();
+    var command = history.commands[toDisplay];
+    lineBuffer = command;
+    outputStream.write(command);
   }
 
   void _handleHorizontalMovement(bool right) {
@@ -177,6 +216,16 @@ class SpaceshipShell {
     outputStream.write("\x08\x1b[0K");
   }
 
+  void _eraseInput() {
+    if (lineBuffer.isEmpty) {
+      return;
+    }
+
+    int count = lineBuffer.length;
+    lineBuffer = "";
+    outputStream.write("\x1b[${count}D\x1b[0K");
+  }
+
   Future<void> _handleLineBreak() async {
     outputStream.writeln();
 
@@ -186,8 +235,9 @@ class SpaceshipShell {
   }
 
   Future<void> _handleLine(String line) async {
-    if (line.isNotEmpty) {
+    if (line.trim().isNotEmpty) {
       try {
+        history.add(line);
         await evaluate(line);
       } on UsageException catch (ex) {
         outputStream.writeln(ex);
@@ -244,4 +294,36 @@ class SpaceshipShell {
 
 List<String> _getArgs(String line) {
   return line.split(" "); // TODO handle quoting
+}
+
+class ShellHistoryManager {
+  static const historySize = 1000;
+  static final store = intMapStoreFactory.store("shell_history");
+
+  final Database _db;
+  final List<String> commands = [];
+
+  ShellHistoryManager(this._db);
+
+  Future<void> load() async {
+    var records = await store.find(
+      _db,
+      finder: Finder(
+        limit: historySize,
+        sortOrders: [SortOrder("timestamp", false)],
+      ),
+    );
+    commands.insertAll(
+      0,
+      records
+          .map((record) => record.value["command"] as String)
+          .toList()
+          .reversed,
+    );
+  }
+
+  Future<void> add(String command) async {
+    commands.add(command);
+    await store.add(_db, {"timestamp": Timestamp.now(), "command": command});
+  }
 }

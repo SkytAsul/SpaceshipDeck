@@ -63,6 +63,8 @@ void _showConsole(SpaceshipKernel kernel, {bool lineMode = false}) async {
       print("An error occurred in the console.");
       print(ex);
       print(st);
+
+      await Future.delayed(Duration(seconds: 1));
     }
   }
 
