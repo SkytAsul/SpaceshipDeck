@@ -76,6 +76,7 @@ class SpaceshipShell {
   String lineBuffer = "";
   bool exitRequested = false;
   int? historyIndex;
+  int cursor = 0;
 
   SpaceshipShell(
     this.inputStream,
@@ -104,17 +105,21 @@ class SpaceshipShell {
           case [0x0A]:
             await _handleLineBreak();
           case [0x7F]:
-            _handleDel();
+            _handleBackspace();
           case [0x15]:
             _eraseInput();
           case [0x1B, 0x5B, 65 || 66]:
             _handleVerticalMovement(codeUnits[2] == 66);
           case [0x1B, 0x5B, 67 || 68]:
             _handleHorizontalMovement(codeUnits[2] == 67);
+          case [0x1B, 0x5B, 51, 126]:
+            _handleDel();
           case [0x1B, ..._]:
-            print("Unhandled escape code: $codeUnits");
           case [var point] when point <= 31:
-            print("Unhandled control character: $point");
+            print("Unhandled escape codes: $codeUnits");
+            _showPrompt();
+            outputStream.write(lineBuffer);
+            cursor = lineBuffer.length;
           case _:
             _handleChars(utf8.decode(codeUnits));
         }
@@ -170,12 +175,16 @@ class SpaceshipShell {
     historyIndex = toDisplay;
     _eraseInput();
     var command = history.commands[toDisplay];
-    lineBuffer = command;
-    outputStream.write(command);
+    _insertInput(command);
   }
 
   void _handleHorizontalMovement(bool right) {
-    // TODO manage cursor position to prevent going before the prompt
+    if ((!right && cursor == 0) || (right && cursor == lineBuffer.length)) {
+      return;
+    }
+
+    cursor += (right ? 1 : -1);
+    outputStream.write("\x1b[1${right ? "C" : "D"}");
   }
 
   void _handleTab() {
@@ -193,8 +202,7 @@ class SpaceshipShell {
     if (commands.isNotEmpty) {
       final cmd = commands[0];
       final completion = cmd.name.substring(commandLabel.length);
-      lineBuffer += completion;
-      outputStream.write(completion);
+      _insertInput(completion);
     }
   }
 
@@ -202,18 +210,30 @@ class SpaceshipShell {
     if (lineMode) {
       await _handleLine(chars.trimRight());
     } else {
-      outputStream.write(chars);
-      lineBuffer += chars;
+      _insertInput(chars);
     }
   }
 
-  void _handleDel() {
+  void _handleBackspace() {
     if (lineBuffer.isEmpty) {
       return;
     }
 
-    lineBuffer = lineBuffer.substring(0, lineBuffer.length - 1);
+    String rightPart = lineBuffer.substring(cursor);
+    cursor--;
+    lineBuffer = lineBuffer.substring(0, cursor);
     outputStream.write("\x08\x1b[0K");
+    _insertInput(rightPart, false);
+  }
+
+  void _handleDel() {
+    if (lineBuffer.isEmpty || cursor == lineBuffer.length) {
+      return;
+    }
+    String rightPart = lineBuffer.substring(cursor + 1);
+    lineBuffer = lineBuffer.substring(0, cursor);
+    outputStream.write("\x1b[0K");
+    _insertInput(rightPart, false);
   }
 
   void _eraseInput() {
@@ -224,6 +244,22 @@ class SpaceshipShell {
     int count = lineBuffer.length;
     lineBuffer = "";
     outputStream.write("\x1b[${count}D\x1b[0K");
+    cursor = 0;
+  }
+
+  void _insertInput(String chars, [bool moveCursor = true]) {
+    String rightPart = lineBuffer.substring(cursor);
+    lineBuffer = lineBuffer.substring(0, cursor) + chars + rightPart;
+    outputStream.write(lineBuffer.substring(cursor));
+
+    int cursorBack = moveCursor ? rightPart.length : chars.length;
+
+    if (cursorBack > 0) {
+      outputStream.write("\x1b[${cursorBack}D");
+    }
+    if (moveCursor) {
+      cursor += chars.length;
+    }
   }
 
   Future<void> _handleLineBreak() async {
@@ -231,12 +267,14 @@ class SpaceshipShell {
 
     final line = lineBuffer.toString();
     lineBuffer = "";
+    cursor = 0;
     await _handleLine(line);
   }
 
   Future<void> _handleLine(String line) async {
     if (line.trim().isNotEmpty) {
       try {
+        historyIndex = null;
         history.add(line);
         await evaluate(line);
       } on UsageException catch (ex) {
