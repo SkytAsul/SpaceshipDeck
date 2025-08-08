@@ -108,10 +108,14 @@ class SpaceshipShell {
             _handleBackspace();
           case [0x15]:
             _eraseInput();
-          case [0x1B, 0x5B, 65 || 66]:
-            _handleVerticalMovement(codeUnits[2] == 66);
-          case [0x1B, 0x5B, 67 || 68]:
-            _handleHorizontalMovement(codeUnits[2] == 67);
+          case [0x1B, 0x7F]:
+            _eraseWord();
+          case [0x1B, 0x5B, var dir] when dir == 65 || dir == 66:
+            _handleVerticalMovement(dir == 66);
+          case [0x1B, 0x5B, var dir] when dir == 67 || dir == 68:
+            _handleHorizontalMovement(dir == 67);
+          case [0x1B, 0x5B, 49, 59, 53, var dir] when dir == 67 || dir == 68:
+            _handleHorizontalMovement(dir == 67, word: true);
           case [0x1B, 0x5B, 51, 126]:
             _handleDel();
           case [0x1B, ..._]:
@@ -178,13 +182,26 @@ class SpaceshipShell {
     _insertInput(command);
   }
 
-  void _handleHorizontalMovement(bool right) {
+  void _handleHorizontalMovement(bool right, {bool word = false}) {
     if ((!right && cursor == 0) || (right && cursor == lineBuffer.length)) {
       return;
     }
 
-    cursor += (right ? 1 : -1);
-    outputStream.write("\x1b[1${right ? "C" : "D"}");
+    int newCursor;
+    if (word) {
+      newCursor = right
+          ? lineBuffer.indexOf(" ", cursor + 1)
+          : lineBuffer.substring(0, cursor).lastIndexOf(" ");
+      if (newCursor == -1) {
+        newCursor = right ? lineBuffer.length : 0;
+      }
+    } else {
+      newCursor = cursor + (right ? 1 : -1);
+    }
+
+    int diff = (newCursor - cursor);
+    cursor = newCursor;
+    outputStream.write("\x1b[${diff.abs()}${right ? "C" : "D"}");
   }
 
   void _handleTab() {
@@ -233,6 +250,20 @@ class SpaceshipShell {
     String rightPart = lineBuffer.substring(cursor + 1);
     lineBuffer = lineBuffer.substring(0, cursor);
     outputStream.write("\x1b[0K");
+    _insertInput(rightPart, false);
+  }
+
+  void _eraseWord() {
+    if (lineBuffer.isEmpty || cursor == 0) {
+      return;
+    }
+
+    String rightPart = lineBuffer.substring(cursor);
+    int cutTo = lineBuffer.substring(0, cursor - 1).lastIndexOf(" ") + 1;
+    int amountBack = cursor - cutTo;
+    cursor = cutTo;
+    lineBuffer = lineBuffer.substring(0, cutTo);
+    outputStream.write("\x1b[${amountBack}D\x1b[0K");
     _insertInput(rightPart, false);
   }
 
