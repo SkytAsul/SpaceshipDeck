@@ -75,7 +75,13 @@ class _ShipyardCommand extends KernelSubcommand {
 class _ShipyardListSubcommand extends KernelSubcommand {
   ShipsSubsystem? get subsystem => get();
 
-  _ShipyardListSubcommand() : super("list", "List shipyards.");
+  _ShipyardListSubcommand() : super("list", "List shipyards.") {
+    argParser.addFlag(
+      "only-where-ship",
+      abbr: "o",
+      help: "Only shows shipyards where at least one of the agent's ships are.",
+    );
+  }
 
   @override
   FutureOr? run() async {
@@ -84,9 +90,19 @@ class _ShipyardListSubcommand extends KernelSubcommand {
     final systems = ships.map((ship) => ship.nav.systemSymbol).toSet();
 
     for (var system in systems) {
-      final systemShipyards = await get<GalaxySubsystem>()!
-          .listWaypoints(system, traits: [WaypointTraitSymbol.SHIPYARD])
-          .toList();
+      var systemShipyardsStream = get<GalaxySubsystem>()!.listWaypoints(
+        system,
+        traits: [WaypointTraitSymbol.SHIPYARD],
+      );
+
+      if (argResults!.flag("only-where-ship")) {
+        systemShipyardsStream = systemShipyardsStream.where(
+          (waypoint) =>
+              ships.any((ship) => ship.nav.waypointSymbol == waypoint.symbol),
+        );
+      }
+
+      final systemShipyards = await systemShipyardsStream.toList();
       print("*Shipyards in $system : (${systemShipyards.length})");
       print(systemShipyards.toFormattedString());
     }
