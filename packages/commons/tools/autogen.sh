@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if ! [ -d protos ]; then
     echo "You are in the wrong directory."

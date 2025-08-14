@@ -1,6 +1,8 @@
+import 'package:deck_controller/communication_bus.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main() async {
+  await connect("::1", 58451);
   runApp(const MyApp());
 }
 

@@ -1,0 +1,63 @@
+enum SystemType {
+    SYSTEM_NEUTRON_STAR = 0;
+    SYSTEM_RED_STAR = 1;
+    SYSTEM_ORANGE_STAR = 2;
+    SYSTEM_BLUE_STAR = 3;
+    SYSTEM_YOUNG_STAR = 4;
+    SYSTEM_WHITE_DWARF = 5;
+    SYSTEM_BLACK_HOLE = 6;
+    SYSTEM_HYPERGIANT = 7;
+    SYSTEM_NEBULA = 8;
+    SYSTEM_UNSTABLE = 9;
+}
+
+enum WaypointType {
+    WAYPOINT_PLANET = 0;
+    WAYPOINT_GAS_GIANT = 1;
+    WAYPOINT_MOON = 2;
+    WAYPOINT_ORBITAL_STATION = 3;
+    WAYPOINT_JUMP_GATE = 4;
+    WAYPOINT_ASTEROID_FIELD = 5;
+    WAYPOINT_ASTEROID = 6;
+    WAYPOINT_ENGINEERED_ASTEROID = 7;
+    WAYPOINT_ASTEROID_BASE = 8;
+    WAYPOINT_NEBULA = 9;
+    WAYPOINT_DEBRIS_FIELD = 10;
+    WAYPOINT_GRAVITY_WELL = 11;
+    WAYPOINT_ARTIFICIAL_GRAVITY_WELL = 12;
+    WAYPOINT_FUEL_STATION = 13;
+}
+
+message System {
+
+    required string symbol = 1;
+    required SystemType type = 2;
+    required int32 x = 3;
+    required int32 y = 4;
+    required string constellation = 5;
+    repeated SystemWaypoint waypoints = 6;
+    // factions
+    optional string name = 8;
+
+}
+
+message SystemWaypoint {
+
+    required string symbol = 1;
+    required WaypointType type = 2;
+    required int32 x = 3;
+    required int32 y = 4;
+    repeated string orbitalsWaypoints = 5;
+    optional string orbits = 6;
+
+}
+
+service SystemProvider {
+
+    rpc GetSystem (SystemRequest) returns (System);
+
+}
+
+message SystemRequest {
+    required string symbol = 1;
+}

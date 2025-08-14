@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:main_computer/main_computer.dart';
 
+const extrashipPort = 58471;
+
 /// Manages Telnet access
 class _RemoteControl {
   final KernelUnitContext _context;
@@ -12,7 +14,10 @@ class _RemoteControl {
   _RemoteControl(this._context);
 
   Future<void> load() async {
-    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv6, 58471);
+    _serverSocket = await ServerSocket.bind(
+      InternetAddress.anyIPv6,
+      extrashipPort,
+    );
     _serverSocket!.listen(_receiveSocket);
     _context.logger.info(
       "Listening for remote connections at ${_serverSocket!.address.address}:${_serverSocket!.port}",

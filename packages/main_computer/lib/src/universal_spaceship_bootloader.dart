@@ -34,13 +34,15 @@ Future<SpaceshipKernel> bootKernel() async {
   final kernel = SpaceshipKernel(
     units: [
       getStorageService(),
-      getCommunicationBusService(),
       getExtraShipCommunicationService(),
       getRemoteControlService(),
       ...getKernelCommands(),
 
       ...getSubsystemServices(),
       ...getSubsystemCommands(),
+
+      // must be at the end since it depends on all subsystems
+      getCommunicationBusService(),
     ],
   );
   return kernel;

@@ -1,12 +1,12 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 
-service Agent {
+service AgentProvider {
     
-    rpc GetAgentInfo (google.protobuf.Empty) returns (AgentInfo) {}
+    rpc GetMyAgent (google.protobuf.Empty) returns (Agent) {}
 
 }
 
-message AgentInfo {
-    string name = 1;
+message Agent {
+    string symbol = 1;
 }
