@@ -5,3 +5,4 @@ environment:
 workspace:
   - packages/main_computer
   - packages/commons
+  - packages/deck_controller
