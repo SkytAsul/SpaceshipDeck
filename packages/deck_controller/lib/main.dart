@@ -1,9 +1,54 @@
-import 'package:deck_controller/communication_bus.dart';
+import 'package:commons/src/generated/agent.pbgrpc.dart';
+import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:grpc/grpc.dart';
+import 'package:logging/logging.dart';
+import 'dart:developer' as dev;
+
+final getIt = GetIt.instance;
+final logger = Logger("Deck Controller");
 
 void main() async {
-  await connect("::1", 58451);
+  await _setup();
+
   runApp(const MyApp());
+}
+
+Future<void> _setup() async {
+  hierarchicalLoggingEnabled = true;
+  Logger.root.onRecord.listen((record) {
+    dev.log(
+      record.message,
+      error: record.error,
+      stackTrace: record.stackTrace,
+      level: record.level.value,
+      name: record.loggerName,
+      sequenceNumber: record.sequenceNumber,
+      time: record.time,
+      zone: record.zone,
+    );
+  });
+  logger.level = Level.ALL;
+  logger.fine("Booting up...");
+
+  getIt.registerSingleton(await _getCommunicationBus("::1", 58451));
+}
+
+Future<ClientChannel> _getCommunicationBus(String host, int port) async {
+  logger.fine("Connecting to communication bus: $host:$port...");
+  final channel = ClientChannel(
+    host,
+    port: port,
+    options: ChannelOptions(credentials: ChannelCredentials.insecure()),
+  );
+
+  // no way to test that the channel is correctly opened, thus we send a dummy
+  // request to test.
+  final answer = await AgentProviderClient(channel).getMyAgent(Empty());
+  logger.info("Connected to communication bus. Hello ${answer.symbol}");
+
+  return channel;
 }
 
 class MyApp extends StatelessWidget {

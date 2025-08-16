@@ -35,6 +35,8 @@ dependencies:
 
   grpc: ^4.1.0
   commons:
+  get_it: ^8.2.0
+  logging: ^1.3.0
 
 dev_dependencies:
   flutter_test:
