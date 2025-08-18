@@ -1,6 +1,8 @@
 import 'package:commons/src/generated/agent.pbgrpc.dart';
 import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
+import 'package:deck_controller/src/features/system/presentation/system_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
 import 'package:grpc/grpc.dart';
 import 'package:logging/logging.dart';
@@ -32,7 +34,9 @@ Future<void> _setup() async {
   logger.level = Level.ALL;
   logger.fine("Booting up...");
 
-  getIt.registerSingleton(await _getCommunicationBus("::1", 58451));
+  getIt.registerSingleton<ClientChannel>(
+    await _getCommunicationBus("::1", 58451),
+  );
 }
 
 Future<ClientChannel> _getCommunicationBus(String host, int port) async {
@@ -56,18 +60,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Spaceship Deck Controller',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF500073)),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(0xFF500073),
-          brightness: Brightness.dark,
+    return ProviderScope(
+      child: MaterialApp(
+        title: 'Spaceship Deck Controller',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF500073)),
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Color(0xFF500073),
+            brightness: Brightness.dark,
+          ),
+        ),
+        home: Material(
+          child: Center(child: SystemPage(symbol: "X1-Q55")),
         ),
       ),
-      home: Material(child: Center(child: Text("Hello"))),
     );
   }
 }
