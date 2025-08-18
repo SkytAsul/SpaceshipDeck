@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:grpc/grpc.dart';
 import 'package:main_computer/main_computer.dart';
+import 'package:main_computer/src/communication_bus/system.dart';
 
 import 'agent.dart';
 
@@ -11,7 +12,10 @@ class CommunicationBus {
   final KernelUnitContext _kernelContext;
 
   late final _server = Server.create(
-    services: [AgentProviderService(_kernelContext.kernel.get()!)],
+    services: [
+      AgentProviderService(_kernelContext.kernel.get()!),
+      SystemProviderService(_kernelContext.kernel.get()!),
+    ],
   );
 
   CommunicationBus(this._kernelContext);
