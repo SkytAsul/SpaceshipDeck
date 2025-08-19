@@ -1,6 +1,7 @@
 import 'package:commons/src/generated/agent.pbgrpc.dart';
 import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
 import 'package:deck_controller/src/features/system/presentation/system_page.dart';
+import 'package:deck_controller/src/features/windows/presentation/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
@@ -73,7 +74,12 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: Material(
-          child: Center(child: SystemPage(symbol: "X1-Q55")),
+          child: Center(
+            child: WindowWidget(
+              title: "System",
+              child: SystemPage(symbol: "X1-Q55"),
+            ),
+          ),
         ),
       ),
     );
