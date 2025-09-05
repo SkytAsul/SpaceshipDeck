@@ -89,28 +89,104 @@ class _SystemMap extends StatelessWidget {
     final maxDistance = waypointsMap.values
         .map((waypoint) => waypoint.position!.distanceSquared)
         .reduce(max);
-
+    final canvasSize = Size.square(sqrt(maxDistance) * 2);
     return InteractiveViewer(
       constrained: false,
       maxScale: 3,
       minScale: 0.5,
+      scaleEnabled: false,
+      // TODO separate scale from InteractiveViewer, only to size canvas so text
+      // remains the same size no matter the zoom level.
       child: Stack(
         alignment: AlignmentDirectional.topStart,
-        children: waypointsMap.values
-            .map(
-              (waypoint) => GestureDetector(
-                onTap: () {
-                  // TODO
-                },
-                child: CustomPaint(
-                  painter: _WaypointPainter(waypoint),
-                  size: Size.square(sqrt(maxDistance) * 2),
-                ),
-              ),
-            )
-            .toList(),
+        children: [
+          CustomPaint(
+            painter: _WaypointsOrbitsPainter(waypoints: waypointsMap.values),
+            size: canvasSize,
+          ),
+          ...waypointsMap.values.map(
+            (waypoint) =>
+                _WaypointWidget(waypoint: waypoint, canvasSize: canvasSize),
+          ),
+        ],
       ),
     );
+  }
+}
+
+class _WaypointWidget extends StatefulWidget {
+  final _LayoutedSystemWaypoint waypoint;
+  final Size canvasSize;
+
+  const _WaypointWidget({required this.waypoint, required this.canvasSize});
+
+  @override
+  State<_WaypointWidget> createState() => _WaypointWidgetState();
+}
+
+class _WaypointWidgetState extends State<_WaypointWidget> {
+  bool hovered = false;
+  bool descriptionShown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final realPosition =
+        widget.waypoint.position! +
+        Offset(widget.canvasSize.width / 2, widget.canvasSize.height / 2);
+
+    return MouseRegion(
+      hitTestBehavior: HitTestBehavior.deferToChild,
+      onEnter: (event) => setState(() {
+        hovered = true;
+        descriptionShown = true;
+      }),
+      onExit: (event) => setState(() {
+        hovered = false;
+        descriptionShown = false;
+      }),
+      child: Stack(
+        children: [
+          CustomPaint(
+            painter: _WaypointPainter(
+              widget.waypoint,
+              growScalar: hovered ? 3 : 0,
+            ),
+            size: widget.canvasSize,
+          ),
+          if (descriptionShown)
+            Positioned(
+              left: realPosition.dx,
+              top: realPosition.dy,
+              child: _WaypointInfoWidget(widget.waypoint.waypoint),
+            ),
+          // TODO move the info widget out of this one to draw it on top of every waypoint
+        ],
+      ),
+    );
+  }
+}
+
+class _WaypointInfoWidget extends StatelessWidget {
+  final SystemWaypoint waypoint;
+
+  const _WaypointInfoWidget(this.waypoint);
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        border: BoxBorder.all(color: theme.colorScheme.surface),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text("""
+      ${waypoint.symbol}
+    
+    Type: ${waypoint.type.name}
+    """),
+    );
+    // TODO: button to fetch complete information on waypoint
   }
 }
 
@@ -243,10 +319,11 @@ class _LayoutedSystemWaypoint {
 
 class _WaypointPainter extends CustomPainter {
   final _LayoutedSystemWaypoint waypoint;
+  final double growScalar;
 
   Size size = Size.zero;
 
-  _WaypointPainter(this.waypoint);
+  _WaypointPainter(this.waypoint, {this.growScalar = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -254,30 +331,53 @@ class _WaypointPainter extends CustomPainter {
     canvas.translate(size.height / 2, size.width / 2);
 
     canvas.drawCircle(
-      waypoint.orbitCenter!,
-      waypoint.orbitDistance!,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = waypoint.style.color
-        ..strokeWidth = waypoint.style.orbitStrokeWidth,
-    );
-    canvas.drawCircle(
       waypoint.position!,
-      waypoint.style.radius,
+      waypoint.style.radius + growScalar,
       Paint()..color = waypoint.style.color,
     );
   }
 
   @override
   bool? hitTest(Offset position) {
+    double rad = waypoint.style.radius + growScalar;
     return (position.translate(-size.height / 2, -size.width / 2) -
                 waypoint.position!)
             .distanceSquared <=
-        waypoint.style.radius * waypoint.style.radius;
+        rad * rad;
   }
 
   @override
   bool shouldRepaint(covariant _WaypointPainter oldDelegate) {
-    return waypoint != oldDelegate.waypoint;
+    return waypoint != oldDelegate.waypoint ||
+        growScalar != oldDelegate.growScalar;
+  }
+}
+
+/// The orbits painter is separate from the waypoint painter so all orbits are
+/// drawn below all waypoints and other decorations.
+class _WaypointsOrbitsPainter extends CustomPainter {
+  final Iterable<_LayoutedSystemWaypoint> waypoints;
+
+  _WaypointsOrbitsPainter({required this.waypoints});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.translate(size.height / 2, size.width / 2);
+
+    for (var waypoint in waypoints) {
+      canvas.drawCircle(
+        waypoint.orbitCenter!,
+        waypoint.orbitDistance!,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..color = waypoint.style.color
+          ..strokeWidth = waypoint.style.orbitStrokeWidth,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaypointsOrbitsPainter oldDelegate) {
+    return waypoints != oldDelegate.waypoints;
   }
 }
