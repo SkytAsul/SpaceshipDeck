@@ -47,14 +47,33 @@ class SystemPageViewModel {
       ref.watch(fetchSystemProvider(symbol));
 }
 
-class _SystemMap extends StatelessWidget {
+class _SystemMap extends StatefulWidget {
   final System system;
 
   const _SystemMap(this.system);
 
   @override
-  Widget build(BuildContext context) {
-    var waypoints = system.waypoints.toList();
+  State<_SystemMap> createState() => _SystemMapState();
+}
+
+class _SystemMapState extends State<_SystemMap> {
+  final Map<String, _LayoutedSystemWaypoint> _waypointsMap = {};
+  Size? canvasSize;
+
+  final Set<String> _waypointsWithDescription = {};
+
+  void toggleWaypointDescriptionShown(_LayoutedSystemWaypoint waypoint) {
+    setState(() {
+      if (!_waypointsWithDescription.add(waypoint.waypoint.symbol)) {
+        _waypointsWithDescription.remove(waypoint.waypoint.symbol);
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    var waypoints = widget.system.waypoints.toList();
     /*waypoints = [
       SystemWaypoint(
         symbol: "a",
@@ -72,24 +91,27 @@ class _SystemMap extends StatelessWidget {
       ),
     ];*/
 
-    final waypointsMap = <String, _LayoutedSystemWaypoint>{};
     for (var waypoint in waypoints) {
-      waypointsMap[waypoint.symbol] = _LayoutedSystemWaypoint(
+      _waypointsMap[waypoint.symbol] = _LayoutedSystemWaypoint(
         waypoint,
-        waypointsMap,
+        _waypointsMap,
       );
     }
 
-    for (var layoutedWaypoint in waypointsMap.values) {
+    for (var layoutedWaypoint in _waypointsMap.values) {
       if (!layoutedWaypoint.waypoint.hasOrbits()) {
         layoutedWaypoint.computeOrbitalSizes();
         layoutedWaypoint.computePositions();
       }
     }
-    final maxDistance = waypointsMap.values
+    final maxDistance = _waypointsMap.values
         .map((waypoint) => waypoint.position!.distanceSquared)
         .reduce(max);
-    final canvasSize = Size.square(sqrt(maxDistance) * 2);
+    canvasSize = Size.square(sqrt(maxDistance) * 2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return InteractiveViewer(
       constrained: false,
       maxScale: 3,
@@ -101,13 +123,20 @@ class _SystemMap extends StatelessWidget {
         alignment: AlignmentDirectional.topStart,
         children: [
           CustomPaint(
-            painter: _WaypointsOrbitsPainter(waypoints: waypointsMap.values),
-            size: canvasSize,
+            painter: _WaypointsOrbitsPainter(waypoints: _waypointsMap.values),
+            size: canvasSize!,
           ),
-          ...waypointsMap.values.map(
-            (waypoint) =>
-                _WaypointWidget(waypoint: waypoint, canvasSize: canvasSize),
+          ..._waypointsMap.values.map(
+            (waypoint) => _WaypointWidget(waypoint: waypoint, mapState: this),
           ),
+          ..._waypointsWithDescription.map((symbol) {
+            var waypoint = _waypointsMap[symbol]!;
+            return Positioned(
+              left: waypoint.position!.dx + canvasSize!.width / 2,
+              top: waypoint.position!.dy + canvasSize!.height / 2,
+              child: _WaypointInfoWidget(waypoint.waypoint),
+            );
+          }),
         ],
       ),
     );
@@ -116,9 +145,9 @@ class _SystemMap extends StatelessWidget {
 
 class _WaypointWidget extends StatefulWidget {
   final _LayoutedSystemWaypoint waypoint;
-  final Size canvasSize;
+  final _SystemMapState mapState;
 
-  const _WaypointWidget({required this.waypoint, required this.canvasSize});
+  const _WaypointWidget({required this.waypoint, required this.mapState});
 
   @override
   State<_WaypointWidget> createState() => _WaypointWidgetState();
@@ -126,41 +155,32 @@ class _WaypointWidget extends StatefulWidget {
 
 class _WaypointWidgetState extends State<_WaypointWidget> {
   bool hovered = false;
-  bool descriptionShown = false;
 
   @override
   Widget build(BuildContext context) {
-    final realPosition =
-        widget.waypoint.position! +
-        Offset(widget.canvasSize.width / 2, widget.canvasSize.height / 2);
-
-    return MouseRegion(
-      hitTestBehavior: HitTestBehavior.deferToChild,
-      onEnter: (event) => setState(() {
-        hovered = true;
-        descriptionShown = true;
-      }),
-      onExit: (event) => setState(() {
-        hovered = false;
-        descriptionShown = false;
-      }),
-      child: Stack(
-        children: [
-          CustomPaint(
-            painter: _WaypointPainter(
-              widget.waypoint,
-              growScalar: hovered ? 3 : 0,
+    return GestureDetector(
+      onTap: () {
+        widget.mapState.toggleWaypointDescriptionShown(widget.waypoint);
+      },
+      child: MouseRegion(
+        hitTestBehavior: HitTestBehavior.deferToChild,
+        onEnter: (event) => setState(() {
+          hovered = true;
+        }),
+        onExit: (event) => setState(() {
+          hovered = false;
+        }),
+        child: Stack(
+          children: [
+            CustomPaint(
+              painter: _WaypointPainter(
+                widget.waypoint,
+                growScalar: hovered ? 3 : 0,
+              ),
+              size: widget.mapState.canvasSize!,
             ),
-            size: widget.canvasSize,
-          ),
-          if (descriptionShown)
-            Positioned(
-              left: realPosition.dx,
-              top: realPosition.dy,
-              child: _WaypointInfoWidget(widget.waypoint.waypoint),
-            ),
-          // TODO move the info widget out of this one to draw it on top of every waypoint
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -176,15 +196,17 @@ class _WaypointInfoWidget extends StatelessWidget {
     var theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        border: BoxBorder.all(color: theme.colorScheme.surface),
+        color: theme.colorScheme.secondaryContainer,
+        border: BoxBorder.all(color: theme.colorScheme.secondary),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text("""
-      ${waypoint.symbol}
-    
-    Type: ${waypoint.type.name}
-    """),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Text("""
+${waypoint.symbol}
+
+Type: ${waypoint.type.name}"""),
+      ),
     );
     // TODO: button to fetch complete information on waypoint
   }
