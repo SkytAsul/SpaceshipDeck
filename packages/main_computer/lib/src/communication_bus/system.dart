@@ -14,6 +14,15 @@ class SystemProviderService extends SystemProviderServiceBase {
     final system = await galaxySubsystem.getSystem(request.symbol);
     return system.toProtobuf();
   }
+
+  @override
+  Future<Waypoint> getWaypoint(
+    ServiceCall call,
+    WaypointRequest request,
+  ) async {
+    final waypoint = await galaxySubsystem.getWaypoint(request.symbol);
+    return waypoint!.toProtobuf();
+  }
 }
 
 extension on api.System {
@@ -36,6 +45,42 @@ extension on api.SystemWaypoint {
     type: WaypointType.values.findItem("WAYPOINT_", type.value),
     x: x,
     y: y,
+  );
+}
+
+extension on api.WaypointModifier {
+  WaypointModifier toProtobuf() => WaypointModifier(
+    symbol: WaypointModifierSymbol.values.findItem(
+      "WAYPOINT_MODIFIER_",
+      symbol.value,
+    ),
+    name: name,
+    description: description,
+  );
+}
+
+extension on api.WaypointTrait {
+  WaypointTrait toProtobuf() => WaypointTrait(
+    symbol: WaypointTraitSymbol.values.findItem(
+      "WAYPOINT_TRAIT_",
+      symbol.value,
+    ),
+    name: name,
+    description: description,
+  );
+}
+
+extension on api.Waypoint {
+  Waypoint toProtobuf() => Waypoint(
+    orbitalsWaypoints: orbitals.map((orbit) => orbit.symbol).toList(),
+    orbits: orbits,
+    symbol: symbol,
+    type: WaypointType.values.findItem("WAYPOINT_", type.value),
+    x: x,
+    y: y,
+    isUnderConstruction: isUnderConstruction,
+    modifiers: modifiers.map((mod) => mod.toProtobuf()),
+    traits: traits.map((trait) => trait.toProtobuf()),
   );
 }
 
