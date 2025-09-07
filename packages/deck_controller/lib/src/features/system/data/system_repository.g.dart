@@ -6,7 +6,7 @@ part of 'system_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$fetchSystemHash() => r'6c122af76a6878e1ed6e8609088ed940dca279de';
+String _$fetchSystemHash() => r'f474b069aec2679a29a587708a1dcaa8035416bf';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -144,6 +144,125 @@ class _FetchSystemProviderElement
 
   @override
   String get symbol => (origin as FetchSystemProvider).symbol;
+}
+
+String _$fetchWaypointHash() => r'caff2db5644ae24e1d128e59e87f815ae5cd94bc';
+
+/// See also [fetchWaypoint].
+@ProviderFor(fetchWaypoint)
+const fetchWaypointProvider = FetchWaypointFamily();
+
+/// See also [fetchWaypoint].
+class FetchWaypointFamily extends Family<AsyncValue<Waypoint>> {
+  /// See also [fetchWaypoint].
+  const FetchWaypointFamily();
+
+  /// See also [fetchWaypoint].
+  FetchWaypointProvider call(String symbol) {
+    return FetchWaypointProvider(symbol);
+  }
+
+  @override
+  FetchWaypointProvider getProviderOverride(
+    covariant FetchWaypointProvider provider,
+  ) {
+    return call(provider.symbol);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'fetchWaypointProvider';
+}
+
+/// See also [fetchWaypoint].
+class FetchWaypointProvider extends FutureProvider<Waypoint> {
+  /// See also [fetchWaypoint].
+  FetchWaypointProvider(String symbol)
+    : this._internal(
+        (ref) => fetchWaypoint(ref as FetchWaypointRef, symbol),
+        from: fetchWaypointProvider,
+        name: r'fetchWaypointProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$fetchWaypointHash,
+        dependencies: FetchWaypointFamily._dependencies,
+        allTransitiveDependencies:
+            FetchWaypointFamily._allTransitiveDependencies,
+        symbol: symbol,
+      );
+
+  FetchWaypointProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.symbol,
+  }) : super.internal();
+
+  final String symbol;
+
+  @override
+  Override overrideWith(
+    FutureOr<Waypoint> Function(FetchWaypointRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FetchWaypointProvider._internal(
+        (ref) => create(ref as FetchWaypointRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        symbol: symbol,
+      ),
+    );
+  }
+
+  @override
+  FutureProviderElement<Waypoint> createElement() {
+    return _FetchWaypointProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FetchWaypointProvider && other.symbol == symbol;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, symbol.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin FetchWaypointRef on FutureProviderRef<Waypoint> {
+  /// The parameter `symbol` of this provider.
+  String get symbol;
+}
+
+class _FetchWaypointProviderElement extends FutureProviderElement<Waypoint>
+    with FetchWaypointRef {
+  _FetchWaypointProviderElement(super.provider);
+
+  @override
+  String get symbol => (origin as FetchWaypointProvider).symbol;
 }
 
 // ignore_for_file: type=lint

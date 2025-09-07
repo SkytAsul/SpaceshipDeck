@@ -74,22 +74,6 @@ class _SystemMapState extends State<_SystemMap> {
   void initState() {
     super.initState();
     var waypoints = widget.system.waypoints.toList();
-    /*waypoints = [
-      SystemWaypoint(
-        symbol: "a",
-        type: WaypointType.WAYPOINT_PLANET,
-        x: 20,
-        y: 5,
-        orbitalsWaypoints: ["b"],
-      ),
-      SystemWaypoint(
-        symbol: "b",
-        type: WaypointType.WAYPOINT_MOON,
-        x: 20,
-        y: 5,
-        orbits: "a",
-      ),
-    ];*/
 
     for (var waypoint in waypoints) {
       _waypointsMap[waypoint.symbol] = _LayoutedSystemWaypoint(
@@ -122,6 +106,10 @@ class _SystemMapState extends State<_SystemMap> {
       child: Stack(
         alignment: AlignmentDirectional.topStart,
         children: [
+          CustomPaint(
+            painter: _SystemStarPainter(type: widget.system.type),
+            size: canvasSize!,
+          ),
           CustomPaint(
             painter: _WaypointsOrbitsPainter(waypoints: _waypointsMap.values),
             size: canvasSize!,
@@ -186,15 +174,112 @@ class _WaypointWidgetState extends State<_WaypointWidget> {
   }
 }
 
-class _WaypointInfoWidget extends StatelessWidget {
+class _WaypointInfoWidget extends ConsumerStatefulWidget {
   final SystemWaypoint waypoint;
 
   const _WaypointInfoWidget(this.waypoint);
 
   @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _WaypointInfoWidgetState();
+}
+
+class _WaypointInfoWidgetState extends ConsumerState<_WaypointInfoWidget> {
+  bool fetchedInformation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchedInformation = ref.exists(
+      fetchWaypointProvider(widget.waypoint.symbol),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
+    var textStyle = theme.textTheme.bodyMedium!.copyWith(
+      color: theme.colorScheme.onSecondaryContainer,
+    );
+
+    var widgets = <Widget>[
+      Align(
+        child: Text(
+          widget.waypoint.symbol,
+          style: theme.textTheme.titleMedium!.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      SizedBox(height: 10),
+      RichText(
+        text: TextSpan(
+          style: textStyle,
+          children: [
+            TextSpan(
+              text: "Type: ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: widget.waypoint.type.name),
+          ],
+        ),
+      ),
+    ];
+
+    switch (fetchedInformation
+        ? ref.watch(fetchWaypointProvider(widget.waypoint.symbol))
+        : null) {
+      case null:
+        widgets.add(
+          OutlinedButton(
+            onPressed: () {
+              setState(() => fetchedInformation = true);
+            },
+            child: Text("Fetch info"),
+          ),
+        );
+      case AsyncError(:final error):
+        widgets.add(Text("Error: $error"));
+      case AsyncData(value: final waypoint):
+        if (waypoint.isUnderConstruction) {
+          widgets.add(Text("Under construction"));
+        }
+        widgets += [
+          Divider(color: theme.colorScheme.onSecondaryContainer),
+          Text(
+            "Traits:",
+            style: textStyle.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Wrap(
+            spacing: 4,
+            runSpacing: 2,
+            children: waypoint.traits
+                .map((trait) => _WaypointTraitWidget(trait))
+                .toList(),
+          ),
+        ];
+        if (waypoint.modifiers.isNotEmpty) {
+          widgets += [
+            Divider(color: theme.colorScheme.onSecondaryContainer),
+            Text(
+              "Modifiers:",
+              style: textStyle.copyWith(fontWeight: FontWeight.bold),
+            ),
+            Wrap(
+              spacing: 4,
+              runSpacing: 2,
+              children: waypoint.modifiers
+                  .map((modifier) => _WaypointModifierWidget(modifier))
+                  .toList(),
+            ),
+          ];
+        }
+      case _:
+        widgets.add(CircularProgressIndicator());
+    }
+
     return Container(
+      width: 300,
       decoration: BoxDecoration(
         color: theme.colorScheme.secondaryContainer,
         border: BoxBorder.all(color: theme.colorScheme.secondary),
@@ -202,13 +287,44 @@ class _WaypointInfoWidget extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(4.0),
-        child: Text("""
-${waypoint.symbol}
-
-Type: ${waypoint.type.name}"""),
+        child: DefaultTextStyle(
+          style: textStyle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: widgets,
+          ),
+        ),
       ),
     );
     // TODO: button to fetch complete information on waypoint
+  }
+}
+
+class _WaypointTraitWidget extends StatelessWidget {
+  final WaypointTrait trait;
+
+  const _WaypointTraitWidget(this.trait);
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: trait.description,
+      child: Chip(label: Text(trait.name)),
+    );
+  }
+}
+
+class _WaypointModifierWidget extends StatelessWidget {
+  final WaypointModifier modifier;
+
+  const _WaypointModifierWidget(this.modifier);
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: modifier.description,
+      child: Chip(label: Text(modifier.name)),
+    );
   }
 }
 
@@ -219,12 +335,12 @@ class _WaypointTypeStyle {
 
   const _WaypointTypeStyle({
     this.radius = 1,
-    this.color = Colors.grey,
+    this.color = Colors.tealAccent,
     this.orbitStrokeWidth = 0.1,
   });
 }
 
-const _waypointTypeStyles = {
+final _waypointTypeStyles = {
   WaypointType.WAYPOINT_PLANET: _WaypointTypeStyle(
     radius: 5,
     color: Colors.green,
@@ -237,7 +353,7 @@ const _waypointTypeStyles = {
   ),
   WaypointType.WAYPOINT_MOON: _WaypointTypeStyle(
     radius: 3,
-    color: Colors.yellow,
+    color: Colors.blueGrey,
     orbitStrokeWidth: 0.15,
   ),
   WaypointType.WAYPOINT_ASTEROID: _WaypointTypeStyle(
@@ -245,11 +361,18 @@ const _waypointTypeStyles = {
     color: Colors.brown,
     orbitStrokeWidth: 0.05,
   ),
-  WaypointType.WAYPOINT_ASTEROID_BASE: _WaypointTypeStyle(radius: 1.2),
   WaypointType.WAYPOINT_ASTEROID_FIELD: _WaypointTypeStyle(
     radius: 3,
     color: Colors.teal,
   ),
+  WaypointType.WAYPOINT_ASTEROID_BASE: _WaypointTypeStyle(
+    radius: 1.2,
+    color: Colors.red.shade900,
+  ),
+  WaypointType.WAYPOINT_FUEL_STATION: _WaypointTypeStyle(
+    color: Colors.deepOrange,
+  ),
+  WaypointType.WAYPOINT_ORBITAL_STATION: _WaypointTypeStyle(color: Colors.red),
 };
 
 class _LayoutedSystemWaypoint {
@@ -402,4 +525,99 @@ class _WaypointsOrbitsPainter extends CustomPainter {
   bool shouldRepaint(covariant _WaypointsOrbitsPainter oldDelegate) {
     return waypoints != oldDelegate.waypoints;
   }
+}
+
+class _SystemTypeStyle {
+  final double radius;
+  final Color color;
+  final Color? outerLayerColor;
+
+  const _SystemTypeStyle({
+    required this.radius,
+    required this.color,
+    this.outerLayerColor,
+  });
+}
+
+final _systemTypeStyles = {
+  SystemType.SYSTEM_BLACK_HOLE: _SystemTypeStyle(
+    radius: 20,
+    color: Colors.black,
+    outerLayerColor: Colors.deepOrange,
+  ),
+  SystemType.SYSTEM_BLUE_STAR: _SystemTypeStyle(
+    radius: 15,
+    color: Colors.lightBlue,
+  ),
+  SystemType.SYSTEM_HYPERGIANT: _SystemTypeStyle(
+    radius: 18,
+    color: Colors.amber.shade100,
+  ),
+  SystemType.SYSTEM_NEBULA: _SystemTypeStyle(
+    radius: 25,
+    color: Colors.pinkAccent,
+  ),
+  SystemType.SYSTEM_NEUTRON_STAR: _SystemTypeStyle(
+    radius: 25,
+    color: Colors.cyan,
+  ),
+  SystemType.SYSTEM_ORANGE_STAR: _SystemTypeStyle(
+    radius: 12,
+    color: Colors.deepOrange,
+  ),
+  SystemType.SYSTEM_RED_STAR: _SystemTypeStyle(
+    radius: 8,
+    color: Colors.red.shade700,
+  ),
+  SystemType.SYSTEM_UNSTABLE: _SystemTypeStyle(
+    radius: 10, // idk
+    color: Colors.purpleAccent,
+  ),
+  SystemType.SYSTEM_WHITE_DWARF: _SystemTypeStyle(
+    radius: 3,
+    color: Colors.white,
+    outerLayerColor: Colors.grey.shade800,
+  ),
+  SystemType.SYSTEM_YOUNG_STAR: _SystemTypeStyle(
+    radius: 10,
+    color: Colors.orangeAccent,
+  ),
+};
+
+class _SystemStarPainter extends CustomPainter {
+  final SystemType type;
+
+  const _SystemStarPainter({required this.type});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.translate(size.height / 2, size.width / 2);
+
+    /* final sunRadius =
+        waypoints
+            .where((w) => !w.waypoint.hasOrbits())
+            .map((w) => w.orbitDistance! - w.orbitalsSize!)
+            .reduce(min) -
+        5; */
+    final style = _systemTypeStyles[type]!;
+    canvas.drawCircle(
+      Offset.zero,
+      style.radius,
+      Paint()
+        ..color = style.color
+        ..style = PaintingStyle.fill,
+    );
+    if (style.outerLayerColor != null) {
+      canvas.drawCircle(
+        Offset.zero,
+        style.radius,
+        Paint()
+          ..color = style.outerLayerColor!
+          ..style = PaintingStyle.stroke,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
