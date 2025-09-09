@@ -30,7 +30,7 @@ Type: ${value.type.name}
               if (value.hasName()) Text("Name: ${value.name}"),
             ],
           ),
-          Expanded(child: InteractiveViewer(child: _SystemMap(value))),
+          Expanded(child: _SystemMap(value)),
         ],
       ),
       _ => CircularProgressIndicator(),
@@ -57,8 +57,10 @@ class _SystemMap extends StatefulWidget {
 }
 
 class _SystemMapState extends State<_SystemMap> {
+  final transformationController = TransformationController();
   final Map<String, _LayoutedSystemWaypoint> _waypointsMap = {};
   Size? canvasSize;
+  double scale = 1;
 
   final Set<String> _waypointsWithDescription = {};
 
@@ -92,41 +94,106 @@ class _SystemMapState extends State<_SystemMap> {
         .map((waypoint) => waypoint.position!.distanceSquared)
         .reduce(max);
     canvasSize = Size.square(sqrt(maxDistance) * 2);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      transformationController.value = Matrix4.translationValues(
+        -canvasSize!.width / 2 + context.size!.width / 2,
+        -canvasSize!.height / 2 + context.size!.height / 2,
+        0,
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      constrained: false,
-      maxScale: 3,
-      minScale: 0.5,
-      scaleEnabled: false,
-      // TODO separate scale from InteractiveViewer, only to size canvas so text
-      // remains the same size no matter the zoom level.
-      child: Stack(
-        alignment: AlignmentDirectional.topStart,
-        children: [
-          CustomPaint(
-            painter: _SystemStarPainter(type: widget.system.type),
-            size: canvasSize!,
+    return Stack(
+      children: [
+        InteractiveViewer(
+          transformationController: transformationController,
+          alignment: Alignment.topLeft,
+          constrained: false,
+          scaleEnabled: false,
+          boundaryMargin: EdgeInsets.all(16 * scale),
+          child: Stack(
+            alignment: Alignment.topLeft,
+            children: [
+              SizedBox.fromSize(
+                size: canvasSize! * scale,
+                child: OverflowBox(
+                  // this box is needed because the CustomPaint instances can be
+                  // bigger than the scaled SizedBox (when scale < 1)
+                  alignment: Alignment.topLeft,
+                  maxWidth: canvasSize!.width,
+                  maxHeight: canvasSize!.height,
+                  child: Transform.scale(
+                    scale: scale,
+                    alignment: Alignment.topLeft,
+                    child: Stack(
+                      children: [
+                        CustomPaint(
+                          painter: _SystemStarPainter(type: widget.system.type),
+                          size: canvasSize!,
+                        ),
+                        CustomPaint(
+                          painter: _WaypointsOrbitsPainter(
+                            waypoints: _waypointsMap.values,
+                          ),
+                          size: canvasSize!,
+                        ),
+                        ..._waypointsMap.values.map(
+                          (waypoint) => _WaypointWidget(
+                            waypoint: waypoint,
+                            mapState: this,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              ..._waypointsWithDescription.map((symbol) {
+                var waypoint = _waypointsMap[symbol]!;
+                return Positioned(
+                  left: (waypoint.position!.dx + canvasSize!.width / 2) * scale,
+                  top: (waypoint.position!.dy + canvasSize!.height / 2) * scale,
+                  child: _WaypointInfoWidget(waypoint.waypoint),
+                );
+              }),
+            ],
           ),
-          CustomPaint(
-            painter: _WaypointsOrbitsPainter(waypoints: _waypointsMap.values),
-            size: canvasSize!,
+        ),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: UnconstrainedBox(
+            child: Slider(
+              value: scale,
+              min: 0.5,
+              max: 2,
+              onChanged: (value) {
+                /// The translation represents the (scaled) difference between the
+                /// top left of the InteractiveViewer and the top left of the canvas.
+                final translation3 = transformationController.value
+                    .getTranslation();
+                final viewCenter = context.size!.center(Offset.zero);
+
+                /// The focal point is the view center, relative to the origin of the canvas.
+                final focalPoint =
+                    viewCenter - Offset(translation3.x, translation3.y);
+                // Quick math (do a drawing).
+                final newTranslation3 = viewCenter - focalPoint / scale * value;
+                transformationController.value = Matrix4.translationValues(
+                  newTranslation3.dx,
+                  newTranslation3.dy,
+                  0,
+                );
+                setState(() {
+                  scale = value;
+                });
+              },
+            ),
           ),
-          ..._waypointsMap.values.map(
-            (waypoint) => _WaypointWidget(waypoint: waypoint, mapState: this),
-          ),
-          ..._waypointsWithDescription.map((symbol) {
-            var waypoint = _waypointsMap[symbol]!;
-            return Positioned(
-              left: waypoint.position!.dx + canvasSize!.width / 2,
-              top: waypoint.position!.dy + canvasSize!.height / 2,
-              child: _WaypointInfoWidget(waypoint.waypoint),
-            );
-          }),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -158,16 +225,12 @@ class _WaypointWidgetState extends State<_WaypointWidget> {
         onExit: (event) => setState(() {
           hovered = false;
         }),
-        child: Stack(
-          children: [
-            CustomPaint(
-              painter: _WaypointPainter(
-                widget.waypoint,
-                growScalar: hovered ? 3 : 0,
-              ),
-              size: widget.mapState.canvasSize!,
-            ),
-          ],
+        child: CustomPaint(
+          painter: _WaypointPainter(
+            widget.waypoint,
+            growScalar: hovered ? 3 : 0,
+          ),
+          size: widget.mapState.canvasSize!,
         ),
       ),
     );
@@ -230,14 +293,17 @@ class _WaypointInfoWidgetState extends ConsumerState<_WaypointInfoWidget> {
         ? ref.watch(fetchWaypointProvider(widget.waypoint.symbol))
         : null) {
       case null:
-        widgets.add(
-          OutlinedButton(
-            onPressed: () {
-              setState(() => fetchedInformation = true);
-            },
-            child: Text("Fetch info"),
+        widgets += [
+          SizedBox(height: 10),
+          Align(
+            child: OutlinedButton(
+              onPressed: () {
+                setState(() => fetchedInformation = true);
+              },
+              child: Text("Fetch info"),
+            ),
           ),
-        );
+        ];
       case AsyncError(:final error):
         widgets.add(Text("Error: $error"));
       case AsyncData(value: final waypoint):
@@ -275,7 +341,7 @@ class _WaypointInfoWidgetState extends ConsumerState<_WaypointInfoWidget> {
           ];
         }
       case _:
-        widgets.add(CircularProgressIndicator());
+        widgets.add(Align(child: CircularProgressIndicator()));
     }
 
     return Container(
@@ -296,7 +362,6 @@ class _WaypointInfoWidgetState extends ConsumerState<_WaypointInfoWidget> {
         ),
       ),
     );
-    // TODO: button to fetch complete information on waypoint
   }
 }
 
@@ -516,7 +581,8 @@ class _WaypointsOrbitsPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..color = waypoint.style.color
-          ..strokeWidth = waypoint.style.orbitStrokeWidth,
+          ..strokeWidth = waypoint.style.orbitStrokeWidth
+          ..isAntiAlias = true,
       );
     }
   }
