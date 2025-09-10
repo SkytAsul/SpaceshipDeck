@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/data/system_repository.dart';
+import 'package:deck_controller/src/features/windows/presentation/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -18,23 +19,93 @@ class SystemPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return switch (vm.fetchSystem(ref)) {
       AsyncError(:final error) => Text("Error: $error"),
-      AsyncData(:final value) => Row(
+      AsyncData(value: final system) => Row(
         children: [
-          Column(
-            children: [
-              Text("""
-System information:
-${value.symbol}
-Type: ${value.type.name}
-"""),
-              if (value.hasName()) Text("Name: ${value.name}"),
-            ],
+          Padding(
+            padding: EdgeInsetsGeometry.symmetric(horizontal: 4),
+            child: _SystemInfoCard(system),
           ),
-          Expanded(child: _SystemMap(value)),
+          Expanded(child: _SystemMap(system)),
         ],
       ),
       _ => CircularProgressIndicator(),
     };
+  }
+}
+
+class _SystemInfoCard extends StatelessWidget {
+  final System system;
+
+  const _SystemInfoCard(this.system);
+
+  @override
+  Widget build(BuildContext context) {
+    final waypointTypes = WaypointType.values
+        .map(
+          (wType) => (
+            wType,
+            system.waypoints.where((waypoint) => waypoint.type == wType).length,
+          ),
+        )
+        .where((a) => a.$2 > 0)
+        .toList();
+    waypointTypes.sort((a, b) => b.$2.compareTo(a.$2));
+
+    return DeckCard(
+      child: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Align(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: theme.textTheme.titleLarge,
+                    children: [
+                      TextSpan(
+                        text: system.symbol,
+                        style: theme.textTheme.titleLarge!.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (system.hasName())
+                        TextSpan(
+                          text: "\n${system.name}",
+                          style: theme.textTheme.titleMedium!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              RichText(
+                text: TextSpan(
+                  style: theme.textTheme.bodyMedium,
+                  children: [
+                    TextSpan(
+                      text: "Type: ",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: system.type.prettyName),
+                    TextSpan(
+                      text: "\nWaypoints:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: " (${system.waypoints.length})"),
+                    for (final (wType, count) in waypointTypes)
+                      TextSpan(text: "\n• $count ${wType.prettyName}"),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -260,106 +331,103 @@ class _WaypointInfoWidgetState extends ConsumerState<_WaypointInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    var textStyle = theme.textTheme.bodyMedium!.copyWith(
-      color: theme.colorScheme.onSecondaryContainer,
-    );
+    return DeckCard(
+      child: Builder(
+        builder: (context) {
+          var theme = Theme.of(context);
+          var textStyle = theme.textTheme.bodyMedium!;
 
-    var widgets = <Widget>[
-      Align(
-        child: Text(
-          widget.waypoint.symbol,
-          style: theme.textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      SizedBox(height: 10),
-      RichText(
-        text: TextSpan(
-          style: textStyle,
-          children: [
-            TextSpan(
-              text: "Type: ",
-              style: TextStyle(fontWeight: FontWeight.bold),
+          var widgets = <Widget>[
+            Align(
+              child: Text(
+                widget.waypoint.symbol,
+                style: theme.textTheme.titleMedium!.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            TextSpan(text: widget.waypoint.type.name),
-          ],
-        ),
-      ),
-    ];
-
-    switch (fetchedInformation
-        ? ref.watch(fetchWaypointProvider(widget.waypoint.symbol))
-        : null) {
-      case null:
-        widgets += [
-          SizedBox(height: 10),
-          Align(
-            child: OutlinedButton(
-              onPressed: () {
-                setState(() => fetchedInformation = true);
-              },
-              child: Text("Fetch info"),
-            ),
-          ),
-        ];
-      case AsyncError(:final error):
-        widgets.add(Text("Error: $error"));
-      case AsyncData(value: final waypoint):
-        if (waypoint.isUnderConstruction) {
-          widgets.add(Text("Under construction"));
-        }
-        widgets += [
-          Divider(color: theme.colorScheme.onSecondaryContainer),
-          Text(
-            "Traits:",
-            style: textStyle.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Wrap(
-            spacing: 4,
-            runSpacing: 2,
-            children: waypoint.traits
-                .map((trait) => _WaypointTraitWidget(trait))
-                .toList(),
-          ),
-        ];
-        if (waypoint.modifiers.isNotEmpty) {
-          widgets += [
-            Divider(color: theme.colorScheme.onSecondaryContainer),
-            Text(
-              "Modifiers:",
-              style: textStyle.copyWith(fontWeight: FontWeight.bold),
-            ),
-            Wrap(
-              spacing: 4,
-              runSpacing: 2,
-              children: waypoint.modifiers
-                  .map((modifier) => _WaypointModifierWidget(modifier))
-                  .toList(),
+            SizedBox(height: 10),
+            RichText(
+              text: TextSpan(
+                style: textStyle,
+                children: [
+                  TextSpan(
+                    text: "Type: ",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: widget.waypoint.type.name),
+                ],
+              ),
             ),
           ];
-        }
-      case _:
-        widgets.add(Align(child: CircularProgressIndicator()));
-    }
 
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
-        border: BoxBorder.all(color: theme.colorScheme.secondary),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: DefaultTextStyle(
-          style: textStyle,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: widgets,
-          ),
-        ),
+          switch (fetchedInformation
+              ? ref.watch(fetchWaypointProvider(widget.waypoint.symbol))
+              : null) {
+            case null:
+              widgets += [
+                SizedBox(height: 10),
+                Align(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() => fetchedInformation = true);
+                    },
+                    child: Text("Fetch info"),
+                  ),
+                ),
+              ];
+            case AsyncError(:final error):
+              widgets.add(Text("Error: $error"));
+            case AsyncData(value: final waypoint):
+              if (waypoint.isUnderConstruction) {
+                widgets.add(Text("Under construction"));
+              }
+              widgets += [
+                Divider(color: theme.colorScheme.onSecondaryContainer),
+                Text(
+                  "Traits:",
+                  style: textStyle.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 2,
+                  children: waypoint.traits
+                      .map((trait) => _WaypointTraitWidget(trait))
+                      .toList(),
+                ),
+              ];
+              if (waypoint.modifiers.isNotEmpty) {
+                widgets += [
+                  Divider(color: theme.colorScheme.onSecondaryContainer),
+                  Text(
+                    "Modifiers:",
+                    style: textStyle.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 2,
+                    children: waypoint.modifiers
+                        .map((modifier) => _WaypointModifierWidget(modifier))
+                        .toList(),
+                  ),
+                ];
+              }
+            case _:
+              widgets.add(Align(child: CircularProgressIndicator()));
+          }
+
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 300),
+            // XXX somehow is always 300 because of the Align widgets inside
+            child: DefaultTextStyle(
+              style: textStyle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widgets,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -686,4 +754,14 @@ class _SystemStarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+extension on WaypointType {
+  String get prettyName =>
+      name.substring("WAYPOINT_".length).toLowerCase().replaceAll("_", " ");
+}
+
+extension on SystemType {
+  String get prettyName =>
+      name.substring("SYSTEM_".length).toLowerCase().replaceAll("_", " ");
 }
