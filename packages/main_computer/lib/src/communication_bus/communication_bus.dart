@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:grpc/grpc.dart';
 import 'package:main_computer/main_computer.dart';
-import 'package:main_computer/src/communication_bus/system.dart';
+import 'package:main_computer/src/communication_bus/ship.dart';
 
 import 'agent.dart';
+import 'system.dart';
 
 const busPort = 58451;
 
@@ -15,6 +16,7 @@ class CommunicationBus {
     services: [
       AgentProviderService(_kernelContext.kernel.get()!),
       SystemProviderService(_kernelContext.kernel.get()!),
+      ShipsProviderService(_kernelContext.kernel.get()!),
     ],
   );
 

@@ -1,8 +1,8 @@
 import 'package:commons/commons.dart';
 import 'package:grpc/grpc.dart';
+import 'package:main_computer/src/communication_bus/utils.dart';
 import 'package:main_computer/src/subsystems/subsystems.dart';
 import 'package:space_traders/api.dart' as api;
-import 'package:protobuf/protobuf.dart' as pb;
 
 class SystemProviderService extends SystemProviderServiceBase {
   GalaxySubsystem galaxySubsystem;
@@ -82,12 +82,4 @@ extension on api.Waypoint {
     modifiers: modifiers.map((mod) => mod.toProtobuf()),
     traits: traits.map((trait) => trait.toProtobuf()),
   );
-}
-
-extension ProtobufEnumList<T extends pb.ProtobufEnum> on List<T> {
-  T findItem(String commonPrefix, String itemName) {
-    return singleWhere(
-      (pbItem) => pbItem.name.substring(commonPrefix.length) == itemName,
-    );
-  }
 }

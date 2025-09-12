@@ -1,0 +1,75 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+enum ShipNavStatus {
+    SHIP_NAV_IN_TRANSIT = 0;
+    SHIP_NAV_IN_ORBIT = 1;
+    SHIP_NAV_DOCKED = 2;
+}
+
+message ShipNavRoute {
+    string destinationSymbol = 1;
+    string originSymbol = 2;
+    google.protobuf.Timestamp departure = 3;
+    google.protobuf.Timestamp arrival = 4;
+}
+
+message ShipNav {
+    string systemSymbol = 1;
+    string waypointSymbol = 2;
+    ShipNavRoute route = 3;
+    ShipNavStatus status = 4;
+    // flight mode
+}
+
+enum ShipFrameSymbol {
+    SHIP_FRAME_PROBE = 0;
+    SHIP_FRAME_DRONE = 1;
+    SHIP_FRAME_INTERCEPTOR = 2;
+    SHIP_FRAME_RACER = 3;
+    SHIP_FRAME_FIGHTER = 4;
+    SHIP_FRAME_FRIGATE = 5;
+    SHIP_FRAME_SHUTTLE = 6;
+    SHIP_FRAME_EXPLORER = 7;
+    SHIP_FRAME_MINER = 8;
+    SHIP_FRAME_LIGHT_FREIGHTER = 9;
+    SHIP_FRAME_HEAVY_FREIGHTER = 10;
+    SHIP_FRAME_TRANSPORT = 11;
+    SHIP_FRAME_DESTROYER = 12;
+    SHIP_FRAME_CRUISER = 13;
+    SHIP_FRAME_CARRIER = 14;
+    SHIP_FRAME_BULK_FREIGHTER = 15;
+}
+
+message ShipFrame {
+    ShipFrameSymbol symbol = 1;
+    string name = 2;
+    double condition = 3;
+    double integrity = 4;
+    string description = 5;
+    // ...rest
+}
+
+message Ship {
+    string symbol = 1;
+    // registration
+    ShipNav nav = 3;
+    // crew
+    ShipFrame frame = 5;
+    // reactor
+    // engine
+    // modules
+    // mounts
+    // cargo
+    // fuel
+    // cooldown
+}
+
+service ShipsProvider {
+    rpc GetMyShips (google.protobuf.Empty) returns (ShipsResponse) {}
+}
+
+message ShipsResponse {
+    repeated Ship ships = 1;
+}
