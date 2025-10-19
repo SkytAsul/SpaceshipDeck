@@ -68,8 +68,14 @@ message Ship {
 
 service ShipsProvider {
     rpc GetMyShips (google.protobuf.Empty) returns (ShipsResponse) {}
+
+    rpc GetShipsInSystem (ShipSystemRequest) returns (ShipsResponse) {}
 }
 
 message ShipsResponse {
     repeated Ship ships = 1;
+}
+
+message ShipSystemRequest {
+    string systemSymbol = 1;
 }

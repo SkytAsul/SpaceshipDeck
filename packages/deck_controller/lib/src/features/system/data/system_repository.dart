@@ -22,3 +22,12 @@ Future<Waypoint> fetchWaypoint(Ref ref, String symbol) async {
   final client = SystemProviderClient(getIt.get<ClientChannel>());
   return await client.getWaypoint(WaypointRequest(symbol: symbol));
 }
+
+@Riverpod(keepAlive: true)
+Future<List<Ship>> fetchShips(Ref ref, String systemSymbol) async {
+  _logger.finer("Fetching ships in system $systemSymbol");
+  final client = ShipsProviderClient(getIt.get<ClientChannel>());
+  return (await client.getShipsInSystem(
+    ShipSystemRequest(systemSymbol: systemSymbol),
+  )).ships;
+}

@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
           child: Center(
             child: WindowWidget(
               title: "System",
-              child: SystemPage(symbol: "X1-Q55"),
+              child: SystemPage(symbol: "X1-GY41"),
             ),
           ),
         ),

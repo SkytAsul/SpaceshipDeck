@@ -19,10 +19,13 @@ class ShipsSubsystem {
         : throw StateError("Extra-ship communication cannot be established.");
   }
 
+  List<Ship>? _cachedShips;
+
   ShipsSubsystem(this._context);
 
   Future<List<Ship>> getMyShips() async {
-    return (await _client.getMyShips())!.data;
+    _cachedShips ??= (await _client.getMyShips())!.data;
+    return _cachedShips!;
   }
 
   Future<Shipyard> getShipyard(String waypointSymbol) async {
