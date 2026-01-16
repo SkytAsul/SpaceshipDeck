@@ -1,6 +1,4 @@
 import 'package:commons/commons.dart';
-import 'package:commons/src/generated/agent.pbgrpc.dart';
-import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
 import 'package:deck_controller/src/features/system/presentation/system_page.dart';
 import 'package:deck_controller/src/features/windows/presentation/window.dart';
 import 'package:flutter/material.dart';

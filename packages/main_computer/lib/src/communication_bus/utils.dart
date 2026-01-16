@@ -1,6 +1,5 @@
+import 'package:commons/commons.dart';
 import 'package:protobuf/protobuf.dart' as pb;
-import 'package:commons/src/generated/google/protobuf/timestamp.pb.dart'
-    show Timestamp;
 import 'package:fixnum/fixnum.dart';
 
 extension ProtobufEnumList<T extends pb.ProtobufEnum> on List<T> {

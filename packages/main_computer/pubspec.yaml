@@ -19,15 +19,15 @@ dependencies:
       path: openapi-generator-annotations
   space_traders:
     path: ./space_traders_api
-  grpc: ^4.1.0
-  protobuf: ^4.1.0
+  grpc:
+  protobuf:
   logging: ^1.3.0
-  meta: ^1.16.0
+  meta:
   stack_trace: ^1.12.1
   sembast: ^3.8.5+1
 
 dev_dependencies:
-  lints: ^5.0.0
+  lints: ^6.0.0
   test: ^1.24.0
   openapi_generator:
     git:

@@ -6,382 +6,218 @@ part of 'system_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$fetchSystemHash() => r'f474b069aec2679a29a587708a1dcaa8035416bf';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [fetchSystem].
 @ProviderFor(fetchSystem)
-const fetchSystemProvider = FetchSystemFamily();
+final fetchSystemProvider = FetchSystemFamily._();
 
-/// See also [fetchSystem].
-class FetchSystemFamily extends Family<AsyncValue<System>> {
-  /// See also [fetchSystem].
-  const FetchSystemFamily();
+final class FetchSystemProvider
+    extends $FunctionalProvider<AsyncValue<System>, System, FutureOr<System>>
+    with $FutureModifier<System>, $FutureProvider<System> {
+  FetchSystemProvider._({
+    required FetchSystemFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fetchSystemProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [fetchSystem].
-  FetchSystemProvider call(String symbol) {
-    return FetchSystemProvider(symbol);
+  @override
+  String debugGetCreateSourceHash() => _$fetchSystemHash();
+
+  @override
+  String toString() {
+    return r'fetchSystemProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  FetchSystemProvider getProviderOverride(
-    covariant FetchSystemProvider provider,
-  ) {
-    return call(provider.symbol);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<System> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'fetchSystemProvider';
-}
-
-/// See also [fetchSystem].
-class FetchSystemProvider extends AutoDisposeFutureProvider<System> {
-  /// See also [fetchSystem].
-  FetchSystemProvider(String symbol)
-    : this._internal(
-        (ref) => fetchSystem(ref as FetchSystemRef, symbol),
-        from: fetchSystemProvider,
-        name: r'fetchSystemProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$fetchSystemHash,
-        dependencies: FetchSystemFamily._dependencies,
-        allTransitiveDependencies: FetchSystemFamily._allTransitiveDependencies,
-        symbol: symbol,
-      );
-
-  FetchSystemProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.symbol,
-  }) : super.internal();
-
-  final String symbol;
-
-  @override
-  Override overrideWith(
-    FutureOr<System> Function(FetchSystemRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: FetchSystemProvider._internal(
-        (ref) => create(ref as FetchSystemRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        symbol: symbol,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<System> createElement() {
-    return _FetchSystemProviderElement(this);
+  FutureOr<System> create(Ref ref) {
+    final argument = this.argument as String;
+    return fetchSystem(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is FetchSystemProvider && other.symbol == symbol;
+    return other is FetchSystemProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, symbol.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin FetchSystemRef on AutoDisposeFutureProviderRef<System> {
-  /// The parameter `symbol` of this provider.
-  String get symbol;
-}
+String _$fetchSystemHash() => r'f474b069aec2679a29a587708a1dcaa8035416bf';
 
-class _FetchSystemProviderElement
-    extends AutoDisposeFutureProviderElement<System>
-    with FetchSystemRef {
-  _FetchSystemProviderElement(super.provider);
+final class FetchSystemFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<System>, String> {
+  FetchSystemFamily._()
+    : super(
+        retry: null,
+        name: r'fetchSystemProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  FetchSystemProvider call(String symbol) =>
+      FetchSystemProvider._(argument: symbol, from: this);
 
   @override
-  String get symbol => (origin as FetchSystemProvider).symbol;
+  String toString() => r'fetchSystemProvider';
+}
+
+@ProviderFor(fetchWaypoint)
+final fetchWaypointProvider = FetchWaypointFamily._();
+
+final class FetchWaypointProvider
+    extends
+        $FunctionalProvider<AsyncValue<Waypoint>, Waypoint, FutureOr<Waypoint>>
+    with $FutureModifier<Waypoint>, $FutureProvider<Waypoint> {
+  FetchWaypointProvider._({
+    required FetchWaypointFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fetchWaypointProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$fetchWaypointHash();
+
+  @override
+  String toString() {
+    return r'fetchWaypointProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Waypoint> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Waypoint> create(Ref ref) {
+    final argument = this.argument as String;
+    return fetchWaypoint(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FetchWaypointProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$fetchWaypointHash() => r'caff2db5644ae24e1d128e59e87f815ae5cd94bc';
 
-/// See also [fetchWaypoint].
-@ProviderFor(fetchWaypoint)
-const fetchWaypointProvider = FetchWaypointFamily();
-
-/// See also [fetchWaypoint].
-class FetchWaypointFamily extends Family<AsyncValue<Waypoint>> {
-  /// See also [fetchWaypoint].
-  const FetchWaypointFamily();
-
-  /// See also [fetchWaypoint].
-  FetchWaypointProvider call(String symbol) {
-    return FetchWaypointProvider(symbol);
-  }
-
-  @override
-  FetchWaypointProvider getProviderOverride(
-    covariant FetchWaypointProvider provider,
-  ) {
-    return call(provider.symbol);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'fetchWaypointProvider';
-}
-
-/// See also [fetchWaypoint].
-class FetchWaypointProvider extends FutureProvider<Waypoint> {
-  /// See also [fetchWaypoint].
-  FetchWaypointProvider(String symbol)
-    : this._internal(
-        (ref) => fetchWaypoint(ref as FetchWaypointRef, symbol),
-        from: fetchWaypointProvider,
+final class FetchWaypointFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Waypoint>, String> {
+  FetchWaypointFamily._()
+    : super(
+        retry: null,
         name: r'fetchWaypointProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$fetchWaypointHash,
-        dependencies: FetchWaypointFamily._dependencies,
-        allTransitiveDependencies:
-            FetchWaypointFamily._allTransitiveDependencies,
-        symbol: symbol,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
       );
 
-  FetchWaypointProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.symbol,
-  }) : super.internal();
-
-  final String symbol;
+  FetchWaypointProvider call(String symbol) =>
+      FetchWaypointProvider._(argument: symbol, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<Waypoint> Function(FetchWaypointRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: FetchWaypointProvider._internal(
-        (ref) => create(ref as FetchWaypointRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        symbol: symbol,
-      ),
-    );
+  String toString() => r'fetchWaypointProvider';
+}
+
+@ProviderFor(fetchShips)
+final fetchShipsProvider = FetchShipsFamily._();
+
+final class FetchShipsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Ship>>,
+          List<Ship>,
+          FutureOr<List<Ship>>
+        >
+    with $FutureModifier<List<Ship>>, $FutureProvider<List<Ship>> {
+  FetchShipsProvider._({
+    required FetchShipsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fetchShipsProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$fetchShipsHash();
+
+  @override
+  String toString() {
+    return r'fetchShipsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  FutureProviderElement<Waypoint> createElement() {
-    return _FetchWaypointProviderElement(this);
+  $FutureProviderElement<List<Ship>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Ship>> create(Ref ref) {
+    final argument = this.argument as String;
+    return fetchShips(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is FetchWaypointProvider && other.symbol == symbol;
+    return other is FetchShipsProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, symbol.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin FetchWaypointRef on FutureProviderRef<Waypoint> {
-  /// The parameter `symbol` of this provider.
-  String get symbol;
-}
-
-class _FetchWaypointProviderElement extends FutureProviderElement<Waypoint>
-    with FetchWaypointRef {
-  _FetchWaypointProviderElement(super.provider);
-
-  @override
-  String get symbol => (origin as FetchWaypointProvider).symbol;
 }
 
 String _$fetchShipsHash() => r'65007276062adfc3dbb9e29aa2a4244f9e63089e';
 
-/// See also [fetchShips].
-@ProviderFor(fetchShips)
-const fetchShipsProvider = FetchShipsFamily();
-
-/// See also [fetchShips].
-class FetchShipsFamily extends Family<AsyncValue<List<Ship>>> {
-  /// See also [fetchShips].
-  const FetchShipsFamily();
-
-  /// See also [fetchShips].
-  FetchShipsProvider call(String systemSymbol) {
-    return FetchShipsProvider(systemSymbol);
-  }
-
-  @override
-  FetchShipsProvider getProviderOverride(
-    covariant FetchShipsProvider provider,
-  ) {
-    return call(provider.systemSymbol);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'fetchShipsProvider';
-}
-
-/// See also [fetchShips].
-class FetchShipsProvider extends FutureProvider<List<Ship>> {
-  /// See also [fetchShips].
-  FetchShipsProvider(String systemSymbol)
-    : this._internal(
-        (ref) => fetchShips(ref as FetchShipsRef, systemSymbol),
-        from: fetchShipsProvider,
+final class FetchShipsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Ship>>, String> {
+  FetchShipsFamily._()
+    : super(
+        retry: null,
         name: r'fetchShipsProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$fetchShipsHash,
-        dependencies: FetchShipsFamily._dependencies,
-        allTransitiveDependencies: FetchShipsFamily._allTransitiveDependencies,
-        systemSymbol: systemSymbol,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
       );
 
-  FetchShipsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.systemSymbol,
-  }) : super.internal();
-
-  final String systemSymbol;
+  FetchShipsProvider call(String systemSymbol) =>
+      FetchShipsProvider._(argument: systemSymbol, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<List<Ship>> Function(FetchShipsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: FetchShipsProvider._internal(
-        (ref) => create(ref as FetchShipsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        systemSymbol: systemSymbol,
-      ),
-    );
-  }
-
-  @override
-  FutureProviderElement<List<Ship>> createElement() {
-    return _FetchShipsProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is FetchShipsProvider && other.systemSymbol == systemSymbol;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, systemSymbol.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'fetchShipsProvider';
 }
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin FetchShipsRef on FutureProviderRef<List<Ship>> {
-  /// The parameter `systemSymbol` of this provider.
-  String get systemSymbol;
-}
-
-class _FetchShipsProviderElement extends FutureProviderElement<List<Ship>>
-    with FetchShipsRef {
-  _FetchShipsProviderElement(super.provider);
-
-  @override
-  String get systemSymbol => (origin as FetchShipsProvider).systemSymbol;
-}
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

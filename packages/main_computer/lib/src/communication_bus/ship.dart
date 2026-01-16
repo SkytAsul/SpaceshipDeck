@@ -1,6 +1,5 @@
-import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
-import 'package:commons/src/generated/ship.pbgrpc.dart';
-import 'package:grpc/src/server/call.dart';
+import 'package:commons/commons.dart';
+import 'package:grpc/grpc.dart';
 import 'package:main_computer/src/communication_bus/utils.dart';
 import 'package:main_computer/src/subsystems/subsystems.dart';
 import 'package:space_traders/api.dart' as api;
