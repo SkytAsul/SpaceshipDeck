@@ -31,7 +31,7 @@ class ShipsSubsystem {
   Future<Shipyard> getShipyard(String waypointSymbol) async {
     var galaxySubsystem = _context.kernel.get<GalaxySubsystem>()!;
     return (await galaxySubsystem.client.getShipyard(
-      galaxySubsystem.getSystemFromWaypoint(waypointSymbol),
+      commons.getSystemFromWaypoint(waypointSymbol),
       waypointSymbol,
     ))!.data;
   }

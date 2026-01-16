@@ -9,4 +9,8 @@ service AgentProvider {
 
 message Agent {
     string symbol = 1;
+    string headquarters = 2;
+    int32 credits = 3;
+    string startingFaction = 4;
+    int32 shipCount = 5;
 }

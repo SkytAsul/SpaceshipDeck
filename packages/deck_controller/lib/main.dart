@@ -1,3 +1,4 @@
+import 'package:commons/commons.dart';
 import 'package:commons/src/generated/agent.pbgrpc.dart';
 import 'package:commons/src/generated/google/protobuf/empty.pb.dart';
 import 'package:deck_controller/src/features/system/presentation/system_page.dart';
@@ -11,6 +12,8 @@ import 'dart:developer' as dev;
 
 final getIt = GetIt.instance;
 final logger = Logger("Deck Controller");
+
+Agent? _agent;
 
 void main() async {
   await _setup();
@@ -50,8 +53,8 @@ Future<ClientChannel> _getCommunicationBus(String host, int port) async {
 
   // no way to test that the channel is correctly opened, thus we send a dummy
   // request to test.
-  final answer = await AgentProviderClient(channel).getMyAgent(Empty());
-  logger.info("Connected to communication bus. Hello ${answer.symbol}");
+  _agent = await AgentProviderClient(channel).getMyAgent(Empty());
+  logger.info("Connected to communication bus. Hello ${_agent!.symbol}");
 
   return channel;
 }
@@ -77,7 +80,9 @@ class MyApp extends StatelessWidget {
           child: Center(
             child: WindowWidget(
               title: "System",
-              child: SystemPage(symbol: "X1-GY41"),
+              child: SystemPage(
+                symbol: getSystemFromWaypoint(_agent!.headquarters),
+              ),
             ),
           ),
         ),

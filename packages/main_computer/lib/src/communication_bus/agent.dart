@@ -16,5 +16,11 @@ class AgentProviderService extends AgentProviderServiceBase {
 }
 
 extension on api.Agent {
-  Agent toProtobuf() => Agent(symbol: symbol);
+  Agent toProtobuf() => Agent(
+    symbol: symbol,
+    headquarters: headquarters,
+    credits: credits,
+    startingFaction: startingFaction,
+    shipCount: shipCount,
+  );
 }

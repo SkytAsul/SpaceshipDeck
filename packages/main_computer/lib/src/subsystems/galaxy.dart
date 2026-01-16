@@ -37,9 +37,6 @@ class GalaxySubsystem {
     return system;
   }
 
-  String getSystemFromWaypoint(String waypointSymbol) =>
-      waypointSymbol.substring(0, waypointSymbol.lastIndexOf("-"));
-
   Future<Waypoint?> getWaypoint(String waypointSymbol) async {
     var waypoint = _cachedWaypoints[waypointSymbol];
     if (waypoint != null) {
@@ -47,7 +44,7 @@ class GalaxySubsystem {
     }
 
     waypoint = (await client.getWaypoint(
-      getSystemFromWaypoint(waypointSymbol),
+      commons.getSystemFromWaypoint(waypointSymbol),
       waypointSymbol,
     ))!.data;
     _cachedWaypoints[waypointSymbol] = waypoint;
