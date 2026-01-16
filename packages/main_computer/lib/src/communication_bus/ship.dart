@@ -15,6 +15,17 @@ class ShipsProviderService extends ShipsProviderServiceBase {
     final ships = await shipsSubsystem.getMyShips();
     return ShipsResponse(ships: ships.map((s) => s.toProtobuf()));
   }
+
+  @override
+  Future<ShipsResponse> getShipsInSystem(
+    ServiceCall call,
+    ShipSystemRequest request,
+  ) async {
+    final ships = (await shipsSubsystem.getMyShips()).where(
+      (ship) => ship.nav.systemSymbol == request.systemSymbol,
+    );
+    return ShipsResponse(ships: ships.map((s) => s.toProtobuf()));
+  }
 }
 
 extension on api.Ship {
@@ -42,7 +53,7 @@ extension on api.ShipNavRoute {
 
 extension on api.ShipFrame {
   ShipFrame toProtobuf() => ShipFrame(
-    symbol: ShipFrameSymbol.values.findItem("SHIP_FRAME_", symbol.value),
+    symbol: ShipFrameSymbol.values.findItem("SHIP_", symbol.value),
     name: name,
     condition: condition,
     integrity: integrity,

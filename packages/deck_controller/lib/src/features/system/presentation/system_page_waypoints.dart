@@ -156,13 +156,13 @@ class _WaypointModifierWidget extends StatelessWidget {
 class _LayoutedWaypoint extends _LayoutedObject {
   final SystemWaypoint waypoint;
 
-  _LayoutedWaypoint.orbits({
+  _LayoutedWaypoint._orbits({
     required this.waypoint,
     required super.objectsMap,
     required super.orbits,
     required super.style,
   }) : super.orbits();
-  _LayoutedWaypoint.positioned({
+  _LayoutedWaypoint._positioned({
     required this.waypoint,
     required super.objectsMap,
     required super.position,
@@ -176,14 +176,14 @@ class _LayoutedWaypoint extends _LayoutedObject {
     final style =
         _waypointTypeStyles[waypoint.type] ?? const _LayoutedWaypointStyle();
     if (waypoint.hasOrbits()) {
-      return _LayoutedWaypoint.orbits(
+      return _LayoutedWaypoint._orbits(
         waypoint: waypoint,
         objectsMap: objectsMap,
         orbits: waypoint.orbits,
         style: style,
       );
     } else {
-      return _LayoutedWaypoint.positioned(
+      return _LayoutedWaypoint._positioned(
         waypoint: waypoint,
         objectsMap: objectsMap,
         position: Offset(waypoint.x.toDouble(), waypoint.y.toDouble()),

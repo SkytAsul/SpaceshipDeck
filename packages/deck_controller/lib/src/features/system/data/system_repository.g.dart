@@ -265,5 +265,123 @@ class _FetchWaypointProviderElement extends FutureProviderElement<Waypoint>
   String get symbol => (origin as FetchWaypointProvider).symbol;
 }
 
+String _$fetchShipsHash() => r'65007276062adfc3dbb9e29aa2a4244f9e63089e';
+
+/// See also [fetchShips].
+@ProviderFor(fetchShips)
+const fetchShipsProvider = FetchShipsFamily();
+
+/// See also [fetchShips].
+class FetchShipsFamily extends Family<AsyncValue<List<Ship>>> {
+  /// See also [fetchShips].
+  const FetchShipsFamily();
+
+  /// See also [fetchShips].
+  FetchShipsProvider call(String systemSymbol) {
+    return FetchShipsProvider(systemSymbol);
+  }
+
+  @override
+  FetchShipsProvider getProviderOverride(
+    covariant FetchShipsProvider provider,
+  ) {
+    return call(provider.systemSymbol);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'fetchShipsProvider';
+}
+
+/// See also [fetchShips].
+class FetchShipsProvider extends FutureProvider<List<Ship>> {
+  /// See also [fetchShips].
+  FetchShipsProvider(String systemSymbol)
+    : this._internal(
+        (ref) => fetchShips(ref as FetchShipsRef, systemSymbol),
+        from: fetchShipsProvider,
+        name: r'fetchShipsProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$fetchShipsHash,
+        dependencies: FetchShipsFamily._dependencies,
+        allTransitiveDependencies: FetchShipsFamily._allTransitiveDependencies,
+        systemSymbol: systemSymbol,
+      );
+
+  FetchShipsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.systemSymbol,
+  }) : super.internal();
+
+  final String systemSymbol;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Ship>> Function(FetchShipsRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FetchShipsProvider._internal(
+        (ref) => create(ref as FetchShipsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        systemSymbol: systemSymbol,
+      ),
+    );
+  }
+
+  @override
+  FutureProviderElement<List<Ship>> createElement() {
+    return _FetchShipsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FetchShipsProvider && other.systemSymbol == systemSymbol;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, systemSymbol.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin FetchShipsRef on FutureProviderRef<List<Ship>> {
+  /// The parameter `systemSymbol` of this provider.
+  String get systemSymbol;
+}
+
+class _FetchShipsProviderElement extends FutureProviderElement<List<Ship>>
+    with FetchShipsRef {
+  _FetchShipsProviderElement(super.provider);
+
+  @override
+  String get systemSymbol => (origin as FetchShipsProvider).systemSymbol;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

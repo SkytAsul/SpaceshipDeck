@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as dart_ui;
 
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/data/system_repository.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'system_page_waypoints.dart';
+part 'system_page_ships.dart';
 
 class SystemPage extends ConsumerWidget {
   final SystemPageViewModel vm;
@@ -16,15 +18,16 @@ class SystemPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return switch (vm.fetchSystem(ref)) {
-      AsyncError(:final error) => Text("Error: $error"),
-      AsyncData(value: final system) => Row(
+    return switch ((vm.fetchSystem(ref), vm.fetchShips(ref))) {
+      (_, AsyncError(:final error)) ||
+      (AsyncError(:final error), _) => Text("Error: $error"),
+      (AsyncData(value: final system), AsyncData(value: final ships)) => Row(
         children: [
           Padding(
             padding: EdgeInsetsGeometry.symmetric(horizontal: 4),
             child: _SystemInfoCard(system),
           ),
-          Expanded(child: _SystemMap(system)),
+          Expanded(child: _SystemMap(system, ships)),
         ],
       ),
       _ => CircularProgressIndicator(),
@@ -115,12 +118,16 @@ class SystemPageViewModel {
 
   AsyncValue<System> fetchSystem(WidgetRef ref) =>
       ref.watch(fetchSystemProvider(symbol));
+
+  AsyncValue<List<Ship>> fetchShips(WidgetRef ref) =>
+      ref.watch(fetchShipsProvider(symbol));
 }
 
 class _SystemMap extends StatefulWidget {
   final System system;
+  final List<Ship> ships;
 
-  const _SystemMap(this.system);
+  const _SystemMap(this.system, this.ships);
 
   @override
   State<_SystemMap> createState() => _SystemMapState();
@@ -149,6 +156,10 @@ class _SystemMapState extends State<_SystemMap> {
 
     for (var waypoint in waypoints) {
       _objectsMap[waypoint.symbol] = _LayoutedWaypoint(waypoint, _objectsMap);
+    }
+
+    for (var ship in widget.ships) {
+      _objectsMap[ship.symbol] = _LayoutedShip(ship, _objectsMap);
     }
 
     for (var layouted in _objectsMap.values) {
@@ -419,6 +430,43 @@ class _ObjectPainter extends CustomPainter {
           radius + growScalar,
           Paint()..color = color,
         );
+      case _LayoutedShipStyle(:final icon):
+        double grownRadius = object.style.radius + growScalar;
+        canvas.drawCircle(
+          object.position!,
+          grownRadius,
+          Paint()..color = Colors.white,
+        );
+        /*final builder = dart_ui.ParagraphBuilder(
+          dart_ui.ParagraphStyle(fontFamily: icon.fontFamily),
+        );
+        builder.pushStyle(
+          dart_ui.TextStyle(color: Colors.red, fontSize: grownRadius),
+        );
+        builder.addText(String.fromCharCode(icon.codePoint));
+        final para = builder.build();
+        para.layout(dart_ui.ParagraphConstraints(width: grownRadius));
+        canvas.drawParagraph(
+          para,
+          object.position! - Offset(grownRadius, grownRadius),
+        );*/
+        final textPainter = TextPainter(
+          textDirection: TextDirection.ltr,
+          text: TextSpan(
+            text: String.fromCharCode(icon.codePoint),
+            style: TextStyle(
+              fontFamily: icon.fontFamily,
+              color: Colors.red,
+              fontSize: grownRadius * 1.75,
+            ),
+          ),
+          textScaler: TextScaler.noScaling,
+        );
+        textPainter.layout();
+        textPainter.paint(
+          canvas,
+          object.position! - Offset(grownRadius, grownRadius),
+        );
       case _:
         throw UnsupportedError("Object style not recognized");
     }
@@ -451,15 +499,17 @@ class _OrbitsPainter extends CustomPainter {
     canvas.translate(size.height / 2, size.width / 2);
 
     for (var object in objects) {
-      canvas.drawCircle(
-        object.orbitCenter!,
-        object.orbitDistance!,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..color = object.style.orbitStrokeColor
-          ..strokeWidth = object.style.orbitStrokeWidth
-          ..isAntiAlias = true,
-      );
+      if (object.orbitCenter != null) {
+        canvas.drawCircle(
+          object.orbitCenter!,
+          object.orbitDistance!,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..color = object.style.orbitStrokeColor
+            ..strokeWidth = object.style.orbitStrokeWidth
+            ..isAntiAlias = true,
+        );
+      }
     }
   }
 
