@@ -7,7 +7,7 @@ executables:
   spaceship_deck: boot
 
 environment:
-  sdk: ^3.8.1
+  sdk: ^3.10.0
 resolution: workspace
 
 dependencies:

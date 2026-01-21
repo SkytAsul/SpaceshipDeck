@@ -27,8 +27,10 @@ class WindowWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          SizedBox(
+          Container(
             width: double.infinity,
+            color: theme.colorScheme.primaryContainer,
+            padding: EdgeInsets.only(left: 8),
             child: Text(title, style: theme.textTheme.titleMedium),
           ),
           Expanded(child: child),

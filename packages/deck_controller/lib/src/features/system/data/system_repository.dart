@@ -1,6 +1,7 @@
+import 'dart:ui';
+
 import 'package:commons/commons.dart';
 import 'package:deck_controller/main.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grpc/grpc.dart';
 import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -30,4 +31,18 @@ Future<List<Ship>> fetchShips(Ref ref, String systemSymbol) async {
   return (await client.getShipsInSystem(
     ShipSystemRequest(systemSymbol: systemSymbol),
   )).ships;
+}
+
+extension SystemWaypointUtils on SystemWaypoint {
+  Offset get position => Offset(x.toDouble(), y.toDouble());
+}
+
+extension SystemTypeUtils on SystemType {
+  String get prettyName =>
+      name.substring("SYSTEM_".length).toLowerCase().replaceAll("_", " ");
+}
+
+extension WaypointTypeUtils on WaypointType {
+  String get prettyName =>
+      name.substring("WAYPOINT_".length).toLowerCase().replaceAll("_", " ");
 }

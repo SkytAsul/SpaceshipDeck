@@ -613,13 +613,3 @@ class _SystemStarPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-extension on WaypointType {
-  String get prettyName =>
-      name.substring("WAYPOINT_".length).toLowerCase().replaceAll("_", " ");
-}
-
-extension on SystemType {
-  String get prettyName =>
-      name.substring("SYSTEM_".length).toLowerCase().replaceAll("_", " ");
-}

@@ -1,5 +1,6 @@
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/presentation/system_page.dart';
+import 'package:deck_controller/src/features/system/presentation/system_window.dart';
 import 'package:deck_controller/src/features/windows/presentation/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,7 +79,7 @@ class MyApp extends StatelessWidget {
           child: Center(
             child: WindowWidget(
               title: "System",
-              child: SystemPage(
+              child: SystemWindow(
                 symbol: getSystemFromWaypoint(_agent!.headquarters),
               ),
             ),
