@@ -40,10 +40,17 @@ class GravitationalLayout extends MultiChildRenderObjectWidget {
     renderObject.orbitPaint = orbitPaint;
     renderObject.initialAngle = initialAngle;
   }
+
+  static Offset getWidgetPosition(BuildContext context) {
+    final layoutedObject =
+        context.findRenderObject()!.parentData as _GravitationalParentData;
+    return layoutedObject.relativeOffset!;
+  }
 }
 
 class _GravitationalParentData extends ContainerBoxParentData<RenderBox> {
   double? angle;
+  Offset? relativeOffset;
 }
 
 class GravitationalRenderObject extends RenderBox
@@ -140,19 +147,18 @@ class GravitationalRenderObject extends RenderBox
     RenderBox body = firstChild!;
     final bodyData = body.parentData as _GravitationalParentData;
     bodyData.offset = body.size.uncenter(systemCenter);
+    bodyData.relativeOffset = Offset.zero;
 
     RenderBox? child = bodyData.nextSibling;
     while (child != null) {
       final childParentData = child.parentData as _GravitationalParentData;
 
+      childParentData.relativeOffset = Offset.fromDirection(
+        _initialAngle + childParentData.angle!,
+        _orbitDistance!,
+      );
       childParentData.offset =
-          systemCenter +
-          child.size.uncenter(
-            Offset.fromDirection(
-              _initialAngle + childParentData.angle!,
-              _orbitDistance!,
-            ),
-          );
+          systemCenter + child.size.uncenter(childParentData.relativeOffset!);
 
       assert(child.parentData == childParentData);
       child = childParentData.nextSibling;

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:canvas_kit/canvas_kit.dart';
 import 'package:commons/commons.dart';
@@ -29,7 +30,7 @@ class SystemWindow extends ConsumerWidget {
             padding: EdgeInsetsGeometry.symmetric(horizontal: 4),
             child: _SystemInfoCard(system),
           ),
-          Expanded(child: _SystemMap(system, ships)),
+          Expanded(child: SystemMap(system, ships)),
         ],
       ),
       _ => CircularProgressIndicator(
@@ -127,14 +128,14 @@ class _SystemInfoCard extends StatelessWidget {
   }
 }
 
-class _SystemMap extends StatefulWidget {
+class SystemMap extends StatefulWidget {
   final System system;
   final List<Ship> ships;
 
-  const _SystemMap(this.system, this.ships);
+  const SystemMap(this.system, this.ships, {super.key});
 
   @override
-  State<_SystemMap> createState() => _SystemMapState();
+  State<SystemMap> createState() => SystemMapState();
 }
 
 class _WaypointData {
@@ -155,7 +156,7 @@ class _PopupData {
   _PopupData(this.id, this.builder, this.worldPosition, this.linkedTo);
 }
 
-class _SystemMapState extends State<_SystemMap> {
+class SystemMapState extends State<SystemMap> {
   late final Starfield _starfield;
   late final Size largeSize;
 
@@ -220,7 +221,7 @@ class _SystemMapState extends State<_SystemMap> {
           controller: _canvasController,
           maxZoom: 5,
           minZoom: 0.5,
-          autoFitToBounds: false,
+          autoFitToBounds: true,
           boundsFitPadding: 0,
           bounds: Rect.fromCenter(
             center: Offset.zero,
@@ -299,7 +300,7 @@ class _SystemMapState extends State<_SystemMap> {
         initialAngle: waypointSymbol.hashCode.toDouble(),
         orbitSpacing: 3,
         orbitPaint: Paint()
-          ..color = Colors.blue
+          ..color = Colors.white.withAlpha(100)
           ..style = PaintingStyle.stroke,
         body: widget,
         orbiting: orbitals
@@ -310,19 +311,6 @@ class _SystemMapState extends State<_SystemMap> {
             .toList(),
       );
     }
-
-    // TODO move out, probably in the WaypointWidget directly
-    widget = GestureDetector(
-      onTap: () {
-        togglePopup(
-          id: waypointSymbol,
-          worldPosition: waypointData.waypoint.position + Offset(20, 15),
-          builder: (context) => WaypointInfoWidget(waypointData.waypoint),
-          linkedTo: waypointData.waypoint.position,
-        );
-      },
-      child: widget,
-    );
 
     return _positionCanvasItemCentered(
       id: waypointSymbol,
@@ -354,6 +342,9 @@ class _SystemMapState extends State<_SystemMap> {
       child: popup.builder(context),
     );
   }
+
+  static SystemMapState of(BuildContext context) =>
+      context.findAncestorStateOfType<SystemMapState>()!;
 }
 
 class _SystemTypeStyle {
@@ -489,8 +480,10 @@ class _PopupConnectionsPainter extends CustomPainter {
       final start = _worldToScreen(popup.worldPosition!);
       final end = _worldToScreen(popup.linkedTo!);
 
-      canvas.drawLine(start, end, paint);
-      // TODO break in orthogonal pieces
+      final points = _lineToOrthogonalComponents(start, end);
+      for (var i = 1; i < points.length; i++) {
+        canvas.drawDashedLine(points[i - 1], points[i], paint, [5, 5]);
+      }
     }
   }
 
@@ -503,4 +496,40 @@ class _PopupConnectionsPainter extends CustomPainter {
   @override
   bool shouldRepaint(_PopupConnectionsPainter old) =>
       old.transform != transform || old.popups != popups;
+}
+
+List<Offset> _lineToOrthogonalComponents(Offset p1, Offset p2) {
+  if (p1.dx == p2.dx || p1.dy == p2.dy) return [p1, p2];
+  double dx = p2.dx - p1.dx;
+  double dy = p2.dy - p1.dy;
+
+  if (dx.abs() > dy.abs()) {
+    return [p1, p1 + Offset(dx / 2, 0), p2 - Offset(dx / 2, 0), p2];
+  } else {
+    return [p1, p1 + Offset(0, dy / 2), p2 - Offset(0, dy / 2), p2];
+  }
+}
+
+extension on Canvas {
+  void drawDashedLine(
+    Offset p1,
+    Offset p2,
+    Paint paint,
+    Iterable<double> pattern,
+  ) {
+    assert(pattern.length.isEven);
+    final distance = (p2 - p1).distance;
+    final normalizedPattern = pattern.map((width) => width / distance).toList();
+    final points = <Offset>[];
+    double t = 0;
+    int i = 0;
+    while (t < 1) {
+      points.add(Offset.lerp(p1, p2, t)!);
+      t += normalizedPattern[i++]; // dashWidth
+      points.add(Offset.lerp(p1, p2, t.clamp(0, 1))!);
+      t += normalizedPattern[i++]; // dashSpace
+      i %= normalizedPattern.length;
+    }
+    drawPoints(PointMode.lines, points, paint);
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/data/system_repository.dart';
+import 'package:deck_controller/src/features/system/presentation/system_window.dart';
 import 'package:deck_controller/src/features/windows/presentation/widgets.dart';
+import 'package:deck_controller/src/utils/widgets/gravitational_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,12 +17,26 @@ class WaypointWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _style;
-    return Tooltip(
-      message: "${waypoint.symbol} (${waypoint.type.prettyName})",
-      child: Container(
-        width: style.radius * 2,
-        height: style.radius * 2,
-        decoration: BoxDecoration(shape: .circle, color: style.color),
+    return GestureDetector(
+      onTap: () {
+        var realPosition = waypoint.position;
+        if (waypoint.hasOrbits()) {
+          realPosition += GravitationalLayout.getWidgetPosition(context);
+        }
+        SystemMapState.of(context).togglePopup(
+          id: waypoint.symbol,
+          worldPosition: realPosition + Offset(20, 15),
+          builder: (context) => WaypointInfoWidget(waypoint),
+          linkedTo: realPosition,
+        );
+      },
+      child: Tooltip(
+        message: "${waypoint.symbol} (${waypoint.type.prettyName})",
+        child: Container(
+          width: style.radius * 2,
+          height: style.radius * 2,
+          decoration: BoxDecoration(shape: .circle, color: style.color),
+        ),
       ),
     );
   }
@@ -74,7 +90,7 @@ final _waypointTypeStyles = {
 class WaypointInfoWidget extends ConsumerStatefulWidget {
   final SystemWaypoint waypoint;
 
-  const WaypointInfoWidget(this.waypoint);
+  const WaypointInfoWidget(this.waypoint, {super.key});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
