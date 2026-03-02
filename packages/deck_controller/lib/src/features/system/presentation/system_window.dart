@@ -215,47 +215,43 @@ class SystemMapState extends State<SystemMap> {
   @override
   Widget build(BuildContext context) {
     return ClipRect(
-      child: Theme(
-        data: ThemeData(scaffoldBackgroundColor: Colors.transparent),
-        child: CanvasKit(
-          controller: _canvasController,
-          maxZoom: 5,
-          minZoom: 0.5,
-          autoFitToBounds: true,
-          boundsFitPadding: 0,
-          bounds: Rect.fromCenter(
-            center: Offset.zero,
-            width: largeSize.width,
-            height: largeSize.height,
-          ),
-          backgroundBuilder: (transform) => CustomPaint(
-            painter: StarfieldPainter(
-              transform: transform,
-              starfield: _starfield,
-            ),
-            foregroundPainter: _TopLevelOrbitsPainter(
-              transform: transform,
-              waypoints: _waypointsHierarchy.keys
-                  .map((symbol) => _waypointsIndex[symbol]!)
-                  .toList(),
-            ),
-            size: largeSize,
-          ),
-          foregroundLayers: [
-            (transform) => _PopupConnectionsPainter(transform, _popups.values),
-          ],
-          children: [
-            _positionCanvasItemCentered(
-              id: "star",
-              centerPosition: Offset.zero,
-              widgetToCenter: _SystemStarWidget(type: widget.system.type),
-            ),
-            for (var waypointSymbol in _waypointsHierarchy.keys)
-              _getWaypointCanvasItem(waypointSymbol),
-            for (var popupData in _popups.values)
-              _getPopupCanvasItem(popupData),
-          ],
+      child: CanvasKit(
+        controller: _canvasController,
+        maxZoom: 5,
+        minZoom: 0.5,
+        autoFitToBounds: true,
+        boundsFitPadding: 0,
+        bounds: Rect.fromCenter(
+          center: Offset.zero,
+          width: largeSize.width,
+          height: largeSize.height,
         ),
+        backgroundBuilder: (transform) => CustomPaint(
+          painter: StarfieldPainter(
+            transform: transform,
+            starfield: _starfield,
+          ),
+          foregroundPainter: _TopLevelOrbitsPainter(
+            transform: transform,
+            waypoints: _waypointsHierarchy.keys
+                .map((symbol) => _waypointsIndex[symbol]!)
+                .toList(),
+          ),
+          size: largeSize,
+        ),
+        foregroundLayers: [
+          (transform) => _PopupConnectionsPainter(transform, _popups.values),
+        ],
+        children: [
+          _positionCanvasItemCentered(
+            id: "star",
+            centerPosition: Offset.zero,
+            widgetToCenter: _SystemStarWidget(type: widget.system.type),
+          ),
+          for (var waypointSymbol in _waypointsHierarchy.keys)
+            _getWaypointCanvasItem(waypointSymbol),
+          for (var popupData in _popups.values) _getPopupCanvasItem(popupData),
+        ],
       ),
     );
   }
