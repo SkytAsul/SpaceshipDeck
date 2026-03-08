@@ -14,6 +14,8 @@ Unlike a traditional game, SpaceTraders does not have a first-party client or ap
 
 We have a [Discord channel](https://discord.com/invite/jh6zurdWk5) where you can share your projects, ask questions, and get help from other players.
 
+For real-time game events via WebSocket and Server-Sent Events, see the [Events API documentation](/events).
+
 
 
 
@@ -76,7 +78,7 @@ try {
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://api.spacetraders.io/v2*
+All URIs are relative to *https://api.staging.spacetraders.io/v2*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -92,12 +94,18 @@ Class | Method | HTTP request | Description
 *ContractsApi* | [**getContract**](doc//ContractsApi.md#getcontract) | **GET** /my/contracts/{contractId} | Get Contract
 *ContractsApi* | [**getContracts**](doc//ContractsApi.md#getcontracts) | **GET** /my/contracts | List Contracts
 *ContractsApi* | [**negotiateContract**](doc//ContractsApi.md#negotiatecontract) | **POST** /my/ships/{shipSymbol}/negotiate/contract | Negotiate Contract
+*ContractsApi* | [**rejectContract**](doc//ContractsApi.md#rejectcontract) | **POST** /my/contracts/{contractId}/reject | Reject Contract
+*DataApi* | [**getShipComponents**](doc//DataApi.md#getshipcomponents) | **GET** /market/ship-components | Describes all ship components
 *DataApi* | [**getSupplyChain**](doc//DataApi.md#getsupplychain) | **GET** /market/supply-chain | Describes trade relationships
-*DataApi* | [**websocketDepartureEvents**](doc//DataApi.md#websocketdepartureevents) | **GET** /my/socket.io | Subscribe to events
+*DataApi* | [**sseEvents**](doc//DataApi.md#sseevents) | **GET** /my/sse | Subscribe to real-time events via Server-Sent Events
+*DefaultApi* | [**documentationAsyncapiJsonGet**](doc//DefaultApi.md#documentationasyncapijsonget) | **GET** /documentation/asyncapi.json | 
+*DefaultApi* | [**myWebsocketGet**](doc//DefaultApi.md#mywebsocketget) | **GET** /my/websocket | 
 *FactionsApi* | [**getFaction**](doc//FactionsApi.md#getfaction) | **GET** /factions/{factionSymbol} | Faction details
 *FactionsApi* | [**getFactions**](doc//FactionsApi.md#getfactions) | **GET** /factions | List factions
 *FactionsApi* | [**getMyFactions**](doc//FactionsApi.md#getmyfactions) | **GET** /my/factions | Get My Factions
+*FleetApi* | [**calculateJump**](doc//FleetApi.md#calculatejump) | **POST** /my/ships/{shipSymbol}/nav/calculate-jump | Calculate Jump Coordinates
 *FleetApi* | [**createChart**](doc//FleetApi.md#createchart) | **POST** /my/ships/{shipSymbol}/chart | Create Chart
+*FleetApi* | [**createShipProjectileScan**](doc//FleetApi.md#createshipprojectilescan) | **POST** /my/ships/{shipSymbol}/scan/projectiles | Scan Projectiles
 *FleetApi* | [**createShipShipScan**](doc//FleetApi.md#createshipshipscan) | **POST** /my/ships/{shipSymbol}/scan/ships | Scan Ships
 *FleetApi* | [**createShipSystemScan**](doc//FleetApi.md#createshipsystemscan) | **POST** /my/ships/{shipSymbol}/scan/systems | Scan Systems
 *FleetApi* | [**createShipWaypointScan**](doc//FleetApi.md#createshipwaypointscan) | **POST** /my/ships/{shipSymbol}/scan/waypoints | Scan Waypoints
@@ -105,7 +113,9 @@ Class | Method | HTTP request | Description
 *FleetApi* | [**dockShip**](doc//FleetApi.md#dockship) | **POST** /my/ships/{shipSymbol}/dock | Dock Ship
 *FleetApi* | [**extractResources**](doc//FleetApi.md#extractresources) | **POST** /my/ships/{shipSymbol}/extract | Extract Resources
 *FleetApi* | [**extractResourcesWithSurvey**](doc//FleetApi.md#extractresourceswithsurvey) | **POST** /my/ships/{shipSymbol}/extract/survey | Extract Resources with Survey
+*FleetApi* | [**fireWeapon**](doc//FleetApi.md#fireweapon) | **POST** /my/ships/{shipSymbol}/fire | Fire Weapon
 *FleetApi* | [**getMounts**](doc//FleetApi.md#getmounts) | **GET** /my/ships/{shipSymbol}/mounts | Get Mounts
+*FleetApi* | [**getMyProjectiles**](doc//FleetApi.md#getmyprojectiles) | **GET** /my/projectiles | Get My Projectiles
 *FleetApi* | [**getMyShip**](doc//FleetApi.md#getmyship) | **GET** /my/ships/{shipSymbol} | Get Ship
 *FleetApi* | [**getMyShipCargo**](doc//FleetApi.md#getmyshipcargo) | **GET** /my/ships/{shipSymbol}/cargo | Get Ship Cargo
 *FleetApi* | [**getMyShips**](doc//FleetApi.md#getmyships) | **GET** /my/ships | List Ships
@@ -125,9 +135,11 @@ Class | Method | HTTP request | Description
 *FleetApi* | [**purchaseCargo**](doc//FleetApi.md#purchasecargo) | **POST** /my/ships/{shipSymbol}/purchase | Purchase Cargo
 *FleetApi* | [**purchaseShip**](doc//FleetApi.md#purchaseship) | **POST** /my/ships | Purchase Ship
 *FleetApi* | [**refuelShip**](doc//FleetApi.md#refuelship) | **POST** /my/ships/{shipSymbol}/refuel | Refuel Ship
+*FleetApi* | [**reloadShip**](doc//FleetApi.md#reloadship) | **POST** /my/ships/{shipSymbol}/reload | Reload Ship Weapons
 *FleetApi* | [**removeMount**](doc//FleetApi.md#removemount) | **POST** /my/ships/{shipSymbol}/mounts/remove | Remove Mount
 *FleetApi* | [**removeShipModule**](doc//FleetApi.md#removeshipmodule) | **POST** /my/ships/{shipSymbol}/modules/remove | Remove Ship Module
 *FleetApi* | [**repairShip**](doc//FleetApi.md#repairship) | **POST** /my/ships/{shipSymbol}/repair | Repair Ship
+*FleetApi* | [**salvageWreck**](doc//FleetApi.md#salvagewreck) | **POST** /my/ships/{shipSymbol}/salvage | Salvage Wreck
 *FleetApi* | [**scrapShip**](doc//FleetApi.md#scrapship) | **POST** /my/ships/{shipSymbol}/scrap | Scrap Ship
 *FleetApi* | [**sellCargo**](doc//FleetApi.md#sellcargo) | **POST** /my/ships/{shipSymbol}/sell | Sell Cargo
 *FleetApi* | [**shipRefine**](doc//FleetApi.md#shiprefine) | **POST** /my/ships/{shipSymbol}/refine | Ship Refine
@@ -136,6 +148,9 @@ Class | Method | HTTP request | Description
 *FleetApi* | [**warpShip**](doc//FleetApi.md#warpship) | **POST** /my/ships/{shipSymbol}/warp | Warp Ship
 *GlobalApi* | [**getErrorCodes**](doc//GlobalApi.md#geterrorcodes) | **GET** /error-codes | Error code list
 *GlobalApi* | [**getStatus**](doc//GlobalApi.md#getstatus) | **GET** / | Server status
+*StorageApi* | [**myShipsShipSymbolStorageDepositPost**](doc//StorageApi.md#myshipsshipsymbolstoragedepositpost) | **POST** /my/ships/{shipSymbol}/storage/deposit | 
+*StorageApi* | [**myShipsShipSymbolStorageRetrievePost**](doc//StorageApi.md#myshipsshipsymbolstorageretrievepost) | **POST** /my/ships/{shipSymbol}/storage/retrieve | 
+*StorageApi* | [**myStorageWaypointSymbolGet**](doc//StorageApi.md#mystoragewaypointsymbolget) | **GET** /my/storage/{waypointSymbol} | 
 *SystemsApi* | [**getConstruction**](doc//SystemsApi.md#getconstruction) | **GET** /systems/{systemSymbol}/waypoints/{waypointSymbol}/construction | Get Construction Site
 *SystemsApi* | [**getJumpGate**](doc//SystemsApi.md#getjumpgate) | **GET** /systems/{systemSymbol}/waypoints/{waypointSymbol}/jump-gate | Get Jump Gate
 *SystemsApi* | [**getMarket**](doc//SystemsApi.md#getmarket) | **GET** /systems/{systemSymbol}/waypoints/{waypointSymbol}/market | Get Market
@@ -154,8 +169,17 @@ Class | Method | HTTP request | Description
  - [ActivityLevel](doc//ActivityLevel.md)
  - [Agent](doc//Agent.md)
  - [AgentEvent](doc//AgentEvent.md)
+ - [CalculateJump201Response](doc//CalculateJump201Response.md)
+ - [CalculateJump201ResponseData](doc//CalculateJump201ResponseData.md)
+ - [CalculateJumpRequest](doc//CalculateJumpRequest.md)
+ - [CalculateJumpRequestAnyOf](doc//CalculateJumpRequestAnyOf.md)
+ - [CalculateJumpRequestAnyOf1](doc//CalculateJumpRequestAnyOf1.md)
+ - [CalculateJumpRequestAnyOf2](doc//CalculateJumpRequestAnyOf2.md)
  - [Chart](doc//Chart.md)
  - [ChartTransaction](doc//ChartTransaction.md)
+ - [CombatScannedShip](doc//CombatScannedShip.md)
+ - [CombatScannedShipFrame](doc//CombatScannedShipFrame.md)
+ - [CombatScannedShipMountsInner](doc//CombatScannedShipMountsInner.md)
  - [Construction](doc//Construction.md)
  - [ConstructionMaterial](doc//ConstructionMaterial.md)
  - [Contract](doc//Contract.md)
@@ -165,6 +189,11 @@ Class | Method | HTTP request | Description
  - [Cooldown](doc//Cooldown.md)
  - [CreateChart201Response](doc//CreateChart201Response.md)
  - [CreateChart201ResponseData](doc//CreateChart201ResponseData.md)
+ - [CreateShipProjectileScan201Response](doc//CreateShipProjectileScan201Response.md)
+ - [CreateShipProjectileScan201ResponseData](doc//CreateShipProjectileScan201ResponseData.md)
+ - [CreateShipProjectileScan201ResponseDataProjectilesInner](doc//CreateShipProjectileScan201ResponseDataProjectilesInner.md)
+ - [CreateShipProjectileScan201ResponseDataProjectilesInnerOrigin](doc//CreateShipProjectileScan201ResponseDataProjectilesInnerOrigin.md)
+ - [CreateShipProjectileScan201ResponseDataProjectilesInnerPosition](doc//CreateShipProjectileScan201ResponseDataProjectilesInnerPosition.md)
  - [CreateShipShipScan201Response](doc//CreateShipShipScan201Response.md)
  - [CreateShipShipScan201ResponseData](doc//CreateShipShipScan201ResponseData.md)
  - [CreateShipSystemScan201Response](doc//CreateShipSystemScan201Response.md)
@@ -186,6 +215,9 @@ Class | Method | HTTP request | Description
  - [FactionSymbol](doc//FactionSymbol.md)
  - [FactionTrait](doc//FactionTrait.md)
  - [FactionTraitSymbol](doc//FactionTraitSymbol.md)
+ - [FireWeapon201Response](doc//FireWeapon201Response.md)
+ - [FireWeapon201ResponseData](doc//FireWeapon201ResponseData.md)
+ - [FireWeaponRequest](doc//FireWeaponRequest.md)
  - [FulfillContract200Response](doc//FulfillContract200Response.md)
  - [GetAgent200Response](doc//GetAgent200Response.md)
  - [GetAgents200Response](doc//GetAgents200Response.md)
@@ -206,6 +238,8 @@ Class | Method | HTTP request | Description
  - [GetMyAgentEvents200Response](doc//GetMyAgentEvents200Response.md)
  - [GetMyFactions200Response](doc//GetMyFactions200Response.md)
  - [GetMyFactions200ResponseDataInner](doc//GetMyFactions200ResponseDataInner.md)
+ - [GetMyProjectiles200Response](doc//GetMyProjectiles200Response.md)
+ - [GetMyProjectiles200ResponseDataInner](doc//GetMyProjectiles200ResponseDataInner.md)
  - [GetMyShip200Response](doc//GetMyShip200Response.md)
  - [GetMyShipCargo200Response](doc//GetMyShipCargo200Response.md)
  - [GetMyShips200Response](doc//GetMyShips200Response.md)
@@ -213,6 +247,9 @@ Class | Method | HTTP request | Description
  - [GetRepairShip200ResponseData](doc//GetRepairShip200ResponseData.md)
  - [GetScrapShip200Response](doc//GetScrapShip200Response.md)
  - [GetScrapShip200ResponseData](doc//GetScrapShip200ResponseData.md)
+ - [GetShipComponents200Response](doc//GetShipComponents200Response.md)
+ - [GetShipComponents200ResponseDataInner](doc//GetShipComponents200ResponseDataInner.md)
+ - [GetShipComponents200ResponseDataInnerRequirements](doc//GetShipComponents200ResponseDataInnerRequirements.md)
  - [GetShipCooldown200Response](doc//GetShipCooldown200Response.md)
  - [GetShipModules200Response](doc//GetShipModules200Response.md)
  - [GetShipNav200Response](doc//GetShipNav200Response.md)
@@ -233,6 +270,7 @@ Class | Method | HTTP request | Description
  - [GetSystemWaypointsTraitsParameter](doc//GetSystemWaypointsTraitsParameter.md)
  - [GetSystems200Response](doc//GetSystems200Response.md)
  - [GetWaypoint200Response](doc//GetWaypoint200Response.md)
+ - [IndustryStatus](doc//IndustryStatus.md)
  - [InstallMount201Response](doc//InstallMount201Response.md)
  - [InstallMount201ResponseData](doc//InstallMount201ResponseData.md)
  - [InstallMountRequest](doc//InstallMountRequest.md)
@@ -244,12 +282,23 @@ Class | Method | HTTP request | Description
  - [JettisonRequest](doc//JettisonRequest.md)
  - [JumpGate](doc//JumpGate.md)
  - [JumpShip200Response](doc//JumpShip200Response.md)
- - [JumpShip200ResponseData](doc//JumpShip200ResponseData.md)
+ - [JumpShip200ResponseAnyOf](doc//JumpShip200ResponseAnyOf.md)
+ - [JumpShip200ResponseAnyOf1](doc//JumpShip200ResponseAnyOf1.md)
+ - [JumpShip200ResponseAnyOf1Data](doc//JumpShip200ResponseAnyOf1Data.md)
+ - [JumpShip200ResponseAnyOfData](doc//JumpShip200ResponseAnyOfData.md)
  - [JumpShipRequest](doc//JumpShipRequest.md)
+ - [JumpShipRequestAnyOf](doc//JumpShipRequestAnyOf.md)
+ - [JumpShipRequestAnyOf1](doc//JumpShipRequestAnyOf1.md)
+ - [JumpShipRequestAnyOf2](doc//JumpShipRequestAnyOf2.md)
  - [Market](doc//Market.md)
  - [MarketTradeGood](doc//MarketTradeGood.md)
  - [MarketTransaction](doc//MarketTransaction.md)
  - [Meta](doc//Meta.md)
+ - [MyShipsShipSymbolStorageDepositPost200Response](doc//MyShipsShipSymbolStorageDepositPost200Response.md)
+ - [MyShipsShipSymbolStorageDepositPost200ResponseData](doc//MyShipsShipSymbolStorageDepositPost200ResponseData.md)
+ - [MyShipsShipSymbolStorageDepositPost200ResponseDataCargo](doc//MyShipsShipSymbolStorageDepositPost200ResponseDataCargo.md)
+ - [MyShipsShipSymbolStorageDepositPostRequest](doc//MyShipsShipSymbolStorageDepositPostRequest.md)
+ - [MyStorageWaypointSymbolGet200Response](doc//MyStorageWaypointSymbolGet200Response.md)
  - [NavigateShip200Response](doc//NavigateShip200Response.md)
  - [NavigateShip200ResponseData](doc//NavigateShip200ResponseData.md)
  - [NavigateShipRequest](doc//NavigateShipRequest.md)
@@ -271,6 +320,13 @@ Class | Method | HTTP request | Description
  - [Register201Response](doc//Register201Response.md)
  - [Register201ResponseData](doc//Register201ResponseData.md)
  - [RegisterRequest](doc//RegisterRequest.md)
+ - [RejectContract200Response](doc//RejectContract200Response.md)
+ - [RejectContract200ResponseData](doc//RejectContract200ResponseData.md)
+ - [RejectContract200ResponseDataReputation](doc//RejectContract200ResponseDataReputation.md)
+ - [ReloadShip200Response](doc//ReloadShip200Response.md)
+ - [ReloadShip200ResponseData](doc//ReloadShip200ResponseData.md)
+ - [ReloadShip200ResponseDataAmmunitionInner](doc//ReloadShip200ResponseDataAmmunitionInner.md)
+ - [ReloadShipRequest](doc//ReloadShipRequest.md)
  - [RemoveMount201Response](doc//RemoveMount201Response.md)
  - [RemoveMount201ResponseData](doc//RemoveMount201ResponseData.md)
  - [RemoveMountRequest](doc//RemoveMountRequest.md)
@@ -279,11 +335,12 @@ Class | Method | HTTP request | Description
  - [RepairShip200Response](doc//RepairShip200Response.md)
  - [RepairShip200ResponseData](doc//RepairShip200ResponseData.md)
  - [RepairTransaction](doc//RepairTransaction.md)
- - [ScannedShip](doc//ScannedShip.md)
- - [ScannedShipEngine](doc//ScannedShipEngine.md)
- - [ScannedShipFrame](doc//ScannedShipFrame.md)
- - [ScannedShipMountsInner](doc//ScannedShipMountsInner.md)
- - [ScannedShipReactor](doc//ScannedShipReactor.md)
+ - [SalvageWreck201Response](doc//SalvageWreck201Response.md)
+ - [SalvageWreck201ResponseData](doc//SalvageWreck201ResponseData.md)
+ - [SalvageWreck201ResponseDataSalvage](doc//SalvageWreck201ResponseDataSalvage.md)
+ - [SalvageWreck201ResponseDataSalvageYieldInner](doc//SalvageWreck201ResponseDataSalvageYieldInner.md)
+ - [SalvageWreck201ResponseDataWreck](doc//SalvageWreck201ResponseDataWreck.md)
+ - [SalvageWreckRequest](doc//SalvageWreckRequest.md)
  - [ScannedSystem](doc//ScannedSystem.md)
  - [ScannedWaypoint](doc//ScannedWaypoint.md)
  - [ScrapShip200Response](doc//ScrapShip200Response.md)
@@ -292,23 +349,29 @@ Class | Method | HTTP request | Description
  - [SellCargo201Response](doc//SellCargo201Response.md)
  - [SellCargoRequest](doc//SellCargoRequest.md)
  - [Ship](doc//Ship.md)
+ - [ShipAmmunition](doc//ShipAmmunition.md)
+ - [ShipCapabilities](doc//ShipCapabilities.md)
  - [ShipCargo](doc//ShipCargo.md)
  - [ShipCargoItem](doc//ShipCargoItem.md)
  - [ShipConditionEvent](doc//ShipConditionEvent.md)
  - [ShipCrew](doc//ShipCrew.md)
- - [ShipEngine](doc//ShipEngine.md)
+ - [ShipDefense](doc//ShipDefense.md)
+ - [ShipDefenseArmor](doc//ShipDefenseArmor.md)
+ - [ShipDefenseHull](doc//ShipDefenseHull.md)
+ - [ShipDefenseShield](doc//ShipDefenseShield.md)
  - [ShipFrame](doc//ShipFrame.md)
+ - [ShipFrameSymbol](doc//ShipFrameSymbol.md)
  - [ShipFuel](doc//ShipFuel.md)
  - [ShipFuelConsumed](doc//ShipFuelConsumed.md)
  - [ShipModificationTransaction](doc//ShipModificationTransaction.md)
  - [ShipModule](doc//ShipModule.md)
  - [ShipMount](doc//ShipMount.md)
+ - [ShipMountSymbol](doc//ShipMountSymbol.md)
  - [ShipNav](doc//ShipNav.md)
  - [ShipNavFlightMode](doc//ShipNavFlightMode.md)
  - [ShipNavRoute](doc//ShipNavRoute.md)
  - [ShipNavRouteWaypoint](doc//ShipNavRouteWaypoint.md)
  - [ShipNavStatus](doc//ShipNavStatus.md)
- - [ShipReactor](doc//ShipReactor.md)
  - [ShipRefine201Response](doc//ShipRefine201Response.md)
  - [ShipRefine201ResponseData](doc//ShipRefine201ResponseData.md)
  - [ShipRefine201ResponseDataProducedInner](doc//ShipRefine201ResponseDataProducedInner.md)
@@ -326,6 +389,7 @@ Class | Method | HTTP request | Description
  - [SiphonResources201Response](doc//SiphonResources201Response.md)
  - [SiphonResources201ResponseData](doc//SiphonResources201ResponseData.md)
  - [SiphonYield](doc//SiphonYield.md)
+ - [StorageItem](doc//StorageItem.md)
  - [SupplyConstruction201Response](doc//SupplyConstruction201Response.md)
  - [SupplyConstruction201ResponseData](doc//SupplyConstruction201ResponseData.md)
  - [SupplyConstructionRequest](doc//SupplyConstructionRequest.md)
@@ -342,11 +406,18 @@ Class | Method | HTTP request | Description
  - [TransferCargo200Response](doc//TransferCargo200Response.md)
  - [TransferCargo200ResponseData](doc//TransferCargo200ResponseData.md)
  - [TransferCargoRequest](doc//TransferCargoRequest.md)
+ - [WarpShip200Response](doc//WarpShip200Response.md)
+ - [WarpShip200ResponseAnyOf](doc//WarpShip200ResponseAnyOf.md)
+ - [WarpShip200ResponseAnyOf1](doc//WarpShip200ResponseAnyOf1.md)
+ - [WarpShip200ResponseAnyOf1Data](doc//WarpShip200ResponseAnyOf1Data.md)
+ - [WarpShipRequest](doc//WarpShipRequest.md)
  - [Waypoint](doc//Waypoint.md)
  - [WaypointFaction](doc//WaypointFaction.md)
  - [WaypointModifier](doc//WaypointModifier.md)
  - [WaypointModifierSymbol](doc//WaypointModifierSymbol.md)
  - [WaypointOrbital](doc//WaypointOrbital.md)
+ - [WaypointSlot](doc//WaypointSlot.md)
+ - [WaypointStorage](doc//WaypointStorage.md)
  - [WaypointTrait](doc//WaypointTrait.md)
  - [WaypointTraitSymbol](doc//WaypointTraitSymbol.md)
  - [WaypointType](doc//WaypointType.md)

@@ -1,16 +1,13 @@
-**
+# See https://dart.dev/guides/libraries/private-files
 
-!README.md
-!.gitignore
-!.openapi-generator-ignore
-!pubspec.yaml
+.dart_tool/
+.packages
+build/
 
-# weird but it works
-!lib
-!lib/api.dart
-!lib/api_client.dart
-!lib/api
-!lib/api/systems_api.dart
-!lib/model
-!lib/model/get_system_waypoints_traits_parameter.dart
-!lib/model/get_supply_chain200_response_data.dart
+# Except for application packages
+pubspec.lock
+
+api-*.json
+
+lib
+.openapi-generator

@@ -21,14 +21,11 @@
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
+
+# Real shit
 test/**
 doc/**
+
 git_push.sh
 .gitignore
-
-lib/model/get_supply_chain200_response_data.dart
-
-lib/model/get_system_waypoints_traits_parameter.dart
-lib/api/systems_api.dart
-lib/api_client.dart
-lib/api.dart
+.travis.yml
