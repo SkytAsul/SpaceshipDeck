@@ -1,27 +1,14 @@
-diff --git lib/model/get_supply_chain200_response_data.dart b/lib/model/get_supply_chain200_response_data.dart
-index 221d92d..2ba2c6d 100644
---- lib/model/get_supply_chain200_response_data.dart
-+++ b/lib/model/get_supply_chain200_response_data.dart
-@@ -62,7 +62,7 @@ class GetSupplyChain200ResponseData {
-       return GetSupplyChain200ResponseData(
-         exportToImportMap: json[r'exportToImportMap'] == null
-             ? const {}
--            : mapCastOfType<String, List>(json, r'exportToImportMap'),
-+            : mapCastOfType<String, List<String>>(json, r'exportToImportMap')!,
-       );
-     }
-     return null;
-diff --git lib/model/get_system_waypoints_traits_parameter.dart b/lib/model/get_system_waypoints_traits_parameter.dart
-index f8a502a..b46c9b2 100644
---- lib/model/get_system_waypoints_traits_parameter.dart
-+++ b/lib/model/get_system_waypoints_traits_parameter.dart
-@@ -12,14 +12,13 @@ part of openapi.api;
+--- lib/model/get_system_waypoints_traits_parameter.dart	2026-03-27 16:41:57.411306951 +0100
++++ lib/model/get_system_waypoints_traits_parameter.dart.patched	2026-03-27 16:42:06.901358562 +0100
+@@ -12,14 +12,15 @@
  
  class GetSystemWaypointsTraitsParameter {
    /// Returns a new [GetSystemWaypointsTraitsParameter] instance.
 -  GetSystemWaypointsTraitsParameter({
 -  });
-+  GetSystemWaypointsTraitsParameter();
++  GetSystemWaypointsTraitsParameter() {
++    throw UnsupportedError("Bad OpenApi Generation");
++  }
  
    @override
 -  bool operator ==(Object other) => identical(this, other) || other is GetSystemWaypointsTraitsParameter &&
@@ -33,70 +20,9 @@ index f8a502a..b46c9b2 100644
      // ignore: unnecessary_parenthesis
  
    @override
-diff --git lib/model/jump_ship_request.dart b/lib/model/jump_ship_request.dart
-index cd59a78..ad8ce89 100644
---- lib/model/jump_ship_request.dart
-+++ b/lib/model/jump_ship_request.dart
-@@ -131,7 +131,8 @@ class JumpShipRequest {
-         systemSymbol: mapValueOfType<String>(json, r'systemSymbol')!,
-         x: num.parse('${json[r'x']}'),
-         y: num.parse('${json[r'y']}'),
--        method: JumpShipRequestMethodEnum.fromJson(json[r'method']) ?? 'gate',
-+        method: JumpShipRequestMethodEnum.fromJson(json[r'method']) ??
-+            JumpShipRequestMethodEnum.gate,
-         jumpSignature: mapValueOfType<String>(json, r'jumpSignature'),
-         dangerouslyAllowJumpWithoutSignature:
-             mapValueOfType<bool>(json, r'dangerouslyAllowJumpWithoutSignature'),
-diff --git lib/model/jump_ship_request_any_of.dart b/lib/model/jump_ship_request_any_of.dart
-index 0adbdec..3e0034b 100644
---- lib/model/jump_ship_request_any_of.dart
-+++ b/lib/model/jump_ship_request_any_of.dart
-@@ -107,8 +107,8 @@ class JumpShipRequestAnyOf {
- 
-       return JumpShipRequestAnyOf(
-         waypointSymbol: mapValueOfType<String>(json, r'waypointSymbol')!,
--        method:
--            JumpShipRequestAnyOfMethodEnum.fromJson(json[r'method']) ?? 'gate',
-+        method: JumpShipRequestAnyOfMethodEnum.fromJson(json[r'method']) ??
-+            JumpShipRequestAnyOfMethodEnum.gate,
-         jumpSignature: mapValueOfType<String>(json, r'jumpSignature'),
-         dangerouslyAllowJumpWithoutSignature:
-             mapValueOfType<bool>(json, r'dangerouslyAllowJumpWithoutSignature'),
-diff --git lib/model/jump_ship_request_any_of1.dart b/lib/model/jump_ship_request_any_of1.dart
-index 4c79ba5..ce627ec 100644
---- lib/model/jump_ship_request_any_of1.dart
-+++ b/lib/model/jump_ship_request_any_of1.dart
-@@ -107,8 +107,8 @@ class JumpShipRequestAnyOf1 {
- 
-       return JumpShipRequestAnyOf1(
-         systemSymbol: mapValueOfType<String>(json, r'systemSymbol')!,
--        method:
--            JumpShipRequestAnyOf1MethodEnum.fromJson(json[r'method']) ?? 'gate',
-+        method: JumpShipRequestAnyOf1MethodEnum.fromJson(json[r'method']) ??
-+            JumpShipRequestAnyOf1MethodEnum.gate,
-         jumpSignature: mapValueOfType<String>(json, r'jumpSignature'),
-         dangerouslyAllowJumpWithoutSignature:
-             mapValueOfType<bool>(json, r'dangerouslyAllowJumpWithoutSignature'),
-diff --git lib/model/jump_ship_request_any_of2.dart b/lib/model/jump_ship_request_any_of2.dart
-index 91e27e6..6f5ec5b 100644
---- lib/model/jump_ship_request_any_of2.dart
-+++ b/lib/model/jump_ship_request_any_of2.dart
-@@ -115,8 +115,8 @@ class JumpShipRequestAnyOf2 {
-       return JumpShipRequestAnyOf2(
-         x: num.parse('${json[r'x']}'),
-         y: num.parse('${json[r'y']}'),
--        method:
--            JumpShipRequestAnyOf2MethodEnum.fromJson(json[r'method']) ?? 'gate',
-+        method: JumpShipRequestAnyOf2MethodEnum.fromJson(json[r'method']) ??
-+            JumpShipRequestAnyOf2MethodEnum.gate,
-         jumpSignature: mapValueOfType<String>(json, r'jumpSignature'),
-         dangerouslyAllowJumpWithoutSignature:
-             mapValueOfType<bool>(json, r'dangerouslyAllowJumpWithoutSignature'),
-diff --git lib/model/warp_ship200_response_any_of1_data.dart b/lib/model/warp_ship200_response_any_of1_data.dart
-index 0371df4..14ca1c6 100644
---- lib/model/warp_ship200_response_any_of1_data.dart
-+++ b/lib/model/warp_ship200_response_any_of1_data.dart
-@@ -23,7 +23,7 @@ class WarpShip200ResponseAnyOf1Data {
+--- lib/model/warp_ship200_response_any_of1_data.dart	2026-03-27 15:08:23.476230611 +0100
++++ lib/model/warp_ship200_response_any_of1_data.dart.patched	2026-03-27 16:44:14.120055900 +0100
+@@ -23,7 +23,7 @@
    bool destroyed;
  
    /// Navigation data (null when destroyed).
@@ -105,7 +31,7 @@ index 0371df4..14ca1c6 100644
  
    /// Fuel consumed before destruction.
    ShipFuel fuel;
-@@ -83,7 +83,7 @@ class WarpShip200ResponseAnyOf1Data {
+@@ -93,7 +93,7 @@
  
        return WarpShip200ResponseAnyOf1Data(
          destroyed: mapValueOfType<bool>(json, r'destroyed')!,
