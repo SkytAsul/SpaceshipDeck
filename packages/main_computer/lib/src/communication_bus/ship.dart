@@ -54,8 +54,6 @@ extension on api.ShipFrame {
   ShipFrame toProtobuf() => ShipFrame(
     symbol: ShipFrameSymbol.values.findItem("SHIP_", symbol.value),
     name: name,
-    condition: condition,
-    integrity: integrity,
     description: description,
   );
 }
