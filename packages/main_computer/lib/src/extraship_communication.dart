@@ -1,4 +1,4 @@
-// Openapi Generator last run: : 2025-07-18T18:24:52.030561
+// Openapi Generator last run: : 2026-07-13T18:56:28.346673
 import 'dart:io';
 
 import 'package:main_computer/src/kernel.dart';

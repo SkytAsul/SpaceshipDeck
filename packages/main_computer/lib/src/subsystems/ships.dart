@@ -21,10 +21,22 @@ class ShipsSubsystem {
 
   List<Ship>? _cachedShips;
 
+  final _shipsTasks = <String, Task>{};
+
   ShipsSubsystem(this._context);
 
+  Task _registerShipTask(String shipSymbol, Task task) {
+    if (_shipsTasks.containsKey(shipSymbol)) {
+      _shipsTasks[shipSymbol]!.last.following = task;
+    } else {
+      _shipsTasks[shipSymbol] = task;
+      task.start();
+    }
+    return task;
+  }
+
   Future<List<Ship>> getMyShips() async {
-    _cachedShips ??= (await _client.getMyShips())!.data;
+    _cachedShips ??= (await _client.getMyShips())!.data; // TODO paginate
     return _cachedShips!;
   }
 
@@ -37,6 +49,7 @@ class ShipsSubsystem {
   }
 
   Future<Ship> purchaseShip(ShipType type, String shipyardSymbol) async {
+    _context.logger.fine("Purchasing $type from $shipyardSymbol");
     var result = (await _client.purchaseShip(
       PurchaseShipRequest(shipType: type, waypointSymbol: shipyardSymbol),
     ))!.data;
@@ -44,14 +57,53 @@ class ShipsSubsystem {
     _context.kernel.get<AgentSubsystem>()!._agent = result.agent;
     return result.ship;
   }
+
+  Task orbitShip(String shipSymbol) {
+    return _registerShipTask(
+      shipSymbol,
+      Task("Put ship into orbit", (setEstEnd) async {
+        _context.logger.fine("Orbiting $shipSymbol");
+        await _client.orbitShip(shipSymbol);
+      }),
+    );
+  }
+
+  Task navigateShip(String shipSymbol, String waypointSymbol) {
+    return _registerShipTask(
+      shipSymbol,
+      Task("Navigation towards $waypointSymbol", (setEstEnd) async {
+        _context.logger.fine("Navigating $shipSymbol to $waypointSymbol");
+        var result = (await _client.navigateShip(
+          shipSymbol,
+          NavigateShipRequest(waypointSymbol: waypointSymbol),
+        ))!.data;
+        assert(result.nav.status == .IN_TRANSIT);
+
+        setEstEnd(result.nav.route.arrival);
+        var flightDuration = DateTime.now().difference(
+          result.nav.route.arrival,
+        );
+        _context.logger.fine("Time of travel: $flightDuration");
+      }),
+    );
+  }
 }
 
+// COMMANDS
 final shipsCommand = KernelCommand(
   "ship",
   (String label) => KernelCommandRunner(label, "Control the ships.")
     ..addCommand(_ShipListCommand())
-    ..addCommand(_ShipyardCommand())
-    ..addCommand(_ShipPurchaseCommand()),
+    ..addCommand(
+      KernelSubcommand("shipyard", "View and purchase ships")
+        ..addSubcommand(_ShipyardListSubcommand())
+        ..addSubcommand(_ShipyardInfoSubcommand()),
+    )
+    ..addCommand(_ShipPurchaseCommand())
+    ..addCommand(
+      KernelSubcommand("navigate", "Handle ship navigation")
+        ..addSubcommand(_ShipOrbitCommand()),
+    ),
 );
 
 class _ShipListCommand extends KernelSubcommand {
@@ -65,13 +117,6 @@ class _ShipListCommand extends KernelSubcommand {
 
     print("Fleet status (${myShips.length}):");
     print(myShips.toFormattedString());
-  }
-}
-
-class _ShipyardCommand extends KernelSubcommand {
-  _ShipyardCommand() : super("shipyard", "") {
-    addSubcommand(_ShipyardListSubcommand());
-    addSubcommand(_ShipyardInfoSubcommand());
   }
 }
 
@@ -153,5 +198,18 @@ class _ShipPurchaseCommand extends KernelSubcommand {
 
     print("Purchased ship!");
     print(ship.toFormattedString());
+  }
+}
+
+class _ShipOrbitCommand extends KernelSubcommand {
+  ShipsSubsystem get subsystem => get()!;
+
+  _ShipOrbitCommand() : super("orbit", "Put the ship into orbit") {
+    argParser.addOption("ship", abbr: "s", mandatory: true);
+  }
+
+  @override
+  FutureOr<dynamic>? run() {
+    subsystem.orbitShip(argResults!.option("ship")!);
   }
 }

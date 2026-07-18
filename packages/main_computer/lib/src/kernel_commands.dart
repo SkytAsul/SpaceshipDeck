@@ -22,7 +22,7 @@ class KernelCommandRunner<T> extends CommandRunner<T> {
   }
 }
 
-abstract class KernelSubcommand<T> extends Command<T> {
+class KernelSubcommand<T> extends Command<T> {
   KernelUnitContext? get context =>
       (runner as KernelCommandRunner<T>?)?.context;
 
