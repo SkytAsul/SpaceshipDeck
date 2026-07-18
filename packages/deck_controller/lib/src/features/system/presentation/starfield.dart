@@ -1,6 +1,7 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' show Colors;
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class Starfield {

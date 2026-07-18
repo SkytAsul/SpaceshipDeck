@@ -3,8 +3,10 @@ import 'package:deck_controller/src/features/system/data/system_repository.dart'
 import 'package:deck_controller/src/features/system/presentation/system_window.dart';
 import 'package:deck_controller/src/features/windows/presentation/widgets.dart';
 import 'package:deck_controller/src/utils/widgets/gravitational_layout.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Tooltip, Colors;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 class WaypointWidget extends StatelessWidget {
   final SystemWaypoint waypoint;
@@ -113,14 +115,14 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
     return DeckCard(
       child: Builder(
         builder: (context) {
-          var theme = Theme.of(context);
-          var textStyle = theme.textTheme.bodyMedium!;
+          var typography = context.theme.typography;
+          var textStyle = typography.body.sm;
 
           var widgets = <Widget>[
             Align(
               child: Text(
                 widget.waypoint.symbol,
-                style: theme.textTheme.titleMedium!.copyWith(
+                style: typography.display.md.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -143,18 +145,6 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
           switch (fetchedInformation
               ? ref.watch(fetchWaypointProvider(widget.waypoint.symbol))
               : null) {
-            case null:
-              widgets += [
-                SizedBox(height: 10),
-                Align(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() => fetchedInformation = true);
-                    },
-                    child: Text("Fetch info"),
-                  ),
-                ),
-              ];
             case AsyncError(:final error):
               widgets.add(Text("Error: $error"));
             case AsyncData(value: final waypoint):
@@ -162,7 +152,11 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
                 widgets.add(Text("Under construction"));
               }
               widgets += [
-                Divider(color: theme.colorScheme.onSecondaryContainer),
+                FDivider(
+                  style: .delta(
+                    color: context.theme.colors.secondaryForeground,
+                  ),
+                ),
                 Text(
                   "Traits:",
                   style: textStyle.copyWith(fontWeight: FontWeight.bold),
@@ -177,7 +171,11 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
               ];
               if (waypoint.modifiers.isNotEmpty) {
                 widgets += [
-                  Divider(color: theme.colorScheme.onSecondaryContainer),
+                  FDivider(
+                    style: .delta(
+                      color: context.theme.colors.secondaryForeground,
+                    ),
+                  ),
                   Text(
                     "Modifiers:",
                     style: textStyle.copyWith(fontWeight: FontWeight.bold),
@@ -191,8 +189,20 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
                   ),
                 ];
               }
-            case _:
-              widgets.add(Align(child: CircularProgressIndicator()));
+            case null || _:
+              widgets += [
+                SizedBox(height: 10),
+                Align(
+                  child: FButton(
+                    variant: .outline,
+                    onPress: () {
+                      setState(() => fetchedInformation = true);
+                    },
+                    prefix: fetchedInformation ? FCircularProgress() : null,
+                    child: Text("Fetch info"),
+                  ),
+                ),
+              ];
           }
 
           return ConstrainedBox(
@@ -220,8 +230,9 @@ class _WaypointTraitWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
+      // waiting for https://github.com/duobaseio/forui/issues/1106 to use FTooltip
       message: trait.description,
-      child: Chip(label: Text(trait.name)),
+      child: FBadge(child: Text(trait.name)),
     );
   }
 }
@@ -235,7 +246,7 @@ class _WaypointModifierWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: modifier.description,
-      child: Chip(label: Text(modifier.name)),
+      child: FBadge(child: Text(modifier.name)),
     );
   }
 }

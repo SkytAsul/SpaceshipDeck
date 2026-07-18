@@ -9,9 +9,11 @@ import 'package:deck_controller/src/features/system/presentation/starfield.dart'
 import 'package:deck_controller/src/features/system/presentation/waypoint.dart';
 import 'package:deck_controller/src/features/windows/presentation/widgets.dart';
 import 'package:deck_controller/src/utils/widgets/sizing.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' show Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:forui/forui.dart';
 
 class SystemWindow extends ConsumerWidget {
   final SystemWindowViewModel vm;
@@ -33,9 +35,7 @@ class SystemWindow extends ConsumerWidget {
           Expanded(child: SystemMap(system, ships)),
         ],
       ),
-      _ => CircularProgressIndicator(
-        constraints: BoxConstraints.loose(Size.square(20)),
-      ),
+      _ => FCircularProgress(size: .lg),
     };
   }
 }
@@ -73,7 +73,7 @@ class _SystemInfoCard extends StatelessWidget {
     return DeckCard(
       child: Builder(
         builder: (context) {
-          final theme = Theme.of(context);
+          final typography = context.theme.typography;
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -81,18 +81,18 @@ class _SystemInfoCard extends StatelessWidget {
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    style: theme.textTheme.titleLarge,
+                    style: typography.display.lg,
                     children: [
                       TextSpan(
                         text: system.symbol,
-                        style: theme.textTheme.titleLarge!.copyWith(
+                        style: typography.display.lg.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (system.hasName())
                         TextSpan(
                           text: "\n${system.name}",
-                          style: theme.textTheme.titleMedium!.copyWith(
+                          style: typography.display.md.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -103,7 +103,7 @@ class _SystemInfoCard extends StatelessWidget {
               SizedBox(height: 10),
               RichText(
                 text: TextSpan(
-                  style: theme.textTheme.bodyMedium,
+                  style: typography.body.sm,
                   children: [
                     TextSpan(
                       text: "Type: ",
@@ -363,8 +363,8 @@ class _SystemStarWidget extends StatelessWidget {
   const _SystemStarWidget({required this.type});
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: type.prettyName,
+  Widget build(BuildContext context) => FTooltip(
+    tipBuilder: (context, controller) => Text(type.prettyName),
     child: Container(
       width: style.radius * 2,
       height: style.radius * 2,

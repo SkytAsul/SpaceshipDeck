@@ -1,8 +1,10 @@
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/presentation/system_window.dart';
 import 'package:deck_controller/src/features/windows/presentation/window.dart';
+import 'package:deck_controller/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:get_it/get_it.dart';
 import 'package:grpc/grpc.dart';
 import 'package:logging/logging.dart';
@@ -16,7 +18,7 @@ Agent? _agent;
 void main() async {
   await _setup();
 
-  runApp(const MyApp());
+  runApp(const DeckController());
 }
 
 Future<void> _setup() async {
@@ -57,30 +59,29 @@ Future<ClientChannel> _getCommunicationBus(String host, int port) async {
   return channel;
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DeckController extends StatelessWidget {
+  const DeckController({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
       child: MaterialApp(
         title: 'Spaceship Deck Controller',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF500073)),
+        theme: lightTheme.toApproximateMaterialTheme(),
+        darkTheme: darkTheme.toApproximateMaterialTheme(),
+        themeMode: .dark,
+        localizationsDelegates: const [
+          ...FLocalizations.localizationsDelegates,
+        ],
+        builder: (context, child) => FTheme(
+          data: Theme.brightnessOf(context) == .light ? lightTheme : darkTheme,
+          child: FToaster(child: FTooltipGroup(child: child!)),
         ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0xFF500073),
-            brightness: Brightness.dark,
-          ),
-        ),
-        home: Material(
-          child: Center(
-            child: WindowWidget(
-              title: "System",
-              child: SystemWindow(
-                symbol: getSystemFromWaypoint(_agent!.headquarters),
-              ),
+        home: Center(
+          child: WindowWidget(
+            title: "System",
+            child: SystemWindow(
+              symbol: getSystemFromWaypoint(_agent!.headquarters),
             ),
           ),
         ),

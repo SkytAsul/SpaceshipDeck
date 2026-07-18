@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 class WindowWidget extends StatelessWidget {
   final String title;
@@ -17,21 +18,26 @@ class WindowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.theme.colors;
     return Container(
       width: initialWidth,
       height: initialHeight,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        border: BoxBorder.all(color: theme.colorScheme.secondary, width: 1),
+        color: colors.background,
+        border: BoxBorder.all(color: colors.secondary, width: 1),
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            color: theme.colorScheme.primaryContainer,
+            color: colors.primary,
             padding: EdgeInsets.only(left: 8),
-            child: Text(title, style: theme.textTheme.titleMedium),
+            child: Text(
+              title,
+              style: context.theme.typography.display.md.copyWith(
+                color: colors.primaryForeground,
+              ),
+            ),
           ),
           Expanded(child: child),
         ],
