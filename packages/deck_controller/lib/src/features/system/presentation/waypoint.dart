@@ -229,9 +229,8 @@ class _WaypointTraitWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      // waiting for https://github.com/duobaseio/forui/issues/1106 to use FTooltip
-      message: trait.description,
+    return FTooltip(
+      tipBuilder: (context, controller) => Text(trait.description),
       child: FBadge(child: Text(trait.name)),
     );
   }
@@ -244,8 +243,8 @@ class _WaypointModifierWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: modifier.description,
+    return FTooltip(
+      tipBuilder: (context, controller) => Text(modifier.description),
       child: FBadge(child: Text(modifier.name)),
     );
   }
