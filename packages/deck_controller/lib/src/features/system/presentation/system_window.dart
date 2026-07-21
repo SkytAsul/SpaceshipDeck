@@ -10,7 +10,7 @@ import 'package:deck_controller/src/features/system/presentation/waypoint.dart';
 import 'package:deck_controller/src/features/windows/presentation/widgets.dart';
 import 'package:deck_controller/src/utils/widgets/sizing.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart' show Colors, Tooltip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:forui/forui.dart';
@@ -246,7 +246,10 @@ class SystemMapState extends State<SystemMap> {
           _positionCanvasItemCentered(
             id: "star",
             centerPosition: Offset.zero,
-            widgetToCenter: _SystemStarWidget(type: widget.system.type),
+            widgetToCenter: _SystemStarWidget(
+              starName: widget.system.name,
+              type: widget.system.type,
+            ),
           ),
           for (var waypointSymbol in _waypointsHierarchy.keys)
             _getWaypointCanvasItem(waypointSymbol),
@@ -356,15 +359,16 @@ class _SystemTypeStyle {
 }
 
 class _SystemStarWidget extends StatelessWidget {
+  final String starName;
   final SystemType type;
 
   _SystemTypeStyle get style => _systemTypeStyles[type]!;
 
-  const _SystemStarWidget({required this.type});
+  const _SystemStarWidget({required this.starName, required this.type});
 
   @override
-  Widget build(BuildContext context) => FTooltip(
-    tipBuilder: (context, controller) => Text(type.prettyName),
+  Widget build(BuildContext context) => Tooltip(
+    message: "$starName (${type.prettyName})",
     child: Container(
       width: style.radius * 2,
       height: style.radius * 2,

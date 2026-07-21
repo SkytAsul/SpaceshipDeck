@@ -136,7 +136,7 @@ class _WaypointInfoWidgetState extends ConsumerState<WaypointInfoWidget> {
                     text: "Type: ",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextSpan(text: widget.waypoint.type.name),
+                  TextSpan(text: widget.waypoint.type.prettyName),
                 ],
               ),
             ),
