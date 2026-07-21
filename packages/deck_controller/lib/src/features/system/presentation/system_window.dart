@@ -221,7 +221,7 @@ class SystemMapState extends State<SystemMap> {
       PopupData.viewport(
         id: "star",
         builder: (context) => _SystemInfoCard(widget.system),
-        viewportPosition: Offset.zero,
+        viewportPosition: Offset(40, 40),
         linkedTo: Offset.zero,
       ),
     );
@@ -530,7 +530,57 @@ class _PopupConnectionsPainter extends CustomPainter {
 
       final end = _worldToScreen(popup.data.linkedTo!);
 
-      final points = _lineToOrthogonalComponents(start, end);
+      var rect = Rect.fromLTWH(
+        start.dx,
+        start.dy,
+        popup.size!.width,
+        popup.size!.height,
+      );
+      if (rect.contains(end)) continue; // point lies inside the popup
+
+      double edgeX, edgeY;
+      if (end.dx > rect.center.dx) {
+        // point lies at the right
+        edgeX = rect.right;
+      } else {
+        // point lies at the left
+        edgeX = rect.left;
+      }
+      if (end.dy > rect.center.dy) {
+        // point lies at the top
+        edgeY = rect.bottom;
+      } else {
+        // point lies at the bottom
+        edgeY = rect.top;
+      }
+
+      Offset heightCenter = Offset(edgeX, rect.top + rect.height / 2.0);
+      Offset widthCenter = Offset(rect.left + rect.width / 2.0, edgeY);
+
+      Offset bestEdge;
+      if (rect.contains(Offset(end.dx, rect.top))) {
+        // point lies under or above the popup (not in a corner)
+        bestEdge = widthCenter;
+      } else if (rect.contains(Offset(rect.left, end.dy))) {
+        // point lies at the left/right of the popup (not in a corner)
+        bestEdge = heightCenter;
+      } else {
+        // point lies in a corner: we choose the shortest Manhattan path
+        double pathCost(Offset off) {
+          Offset path = end - off;
+          return path.dx.abs() + path.dy.abs();
+        }
+
+        bestEdge = pathCost(heightCenter) > pathCost(widthCenter)
+            ? widthCenter
+            : heightCenter;
+      }
+
+      final points = _lineToOrthogonalComponents(
+        bestEdge,
+        end,
+        startHorizontal: bestEdge == heightCenter,
+      );
       for (var i = 1; i < points.length; i++) {
         canvas.drawDashedLine(points[i - 1], points[i], paint, [5, 5]);
       }
@@ -548,12 +598,16 @@ class _PopupConnectionsPainter extends CustomPainter {
       old.transform != transform || old.popups != popups;
 }
 
-List<Offset> _lineToOrthogonalComponents(Offset p1, Offset p2) {
+List<Offset> _lineToOrthogonalComponents(
+  Offset p1,
+  Offset p2, {
+  bool? startHorizontal,
+}) {
   if (p1.dx == p2.dx || p1.dy == p2.dy) return [p1, p2];
   double dx = p2.dx - p1.dx;
   double dy = p2.dy - p1.dy;
 
-  if (dx.abs() > dy.abs()) {
+  if (startHorizontal ?? dx.abs() > dy.abs()) {
     return [p1, p1 + Offset(dx / 2, 0), p2 - Offset(dx / 2, 0), p2];
   } else {
     return [p1, p1 + Offset(0, dy / 2), p2 - Offset(0, dy / 2), p2];
