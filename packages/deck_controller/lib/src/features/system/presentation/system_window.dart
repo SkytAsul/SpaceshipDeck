@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:canvas_kit/canvas_kit.dart';
 import 'package:commons/commons.dart';
 import 'package:deck_controller/src/features/system/data/system_repository.dart';
+import 'package:deck_controller/src/features/system/presentation/ship.dart';
 import 'package:deck_controller/src/utils/widgets/gravitational_layout.dart';
 import 'package:deck_controller/src/features/system/presentation/starfield.dart';
 import 'package:deck_controller/src/features/system/presentation/waypoint.dart';
@@ -141,10 +142,47 @@ class SystemMap extends StatefulWidget {
   State<SystemMap> createState() => SystemMapState();
 }
 
-class _WaypointData {
-  SystemWaypoint waypoint;
+sealed class _ObjectData {
+  Size? size;
+  String get id;
+  Offset get position;
+}
+
+class _Star extends _ObjectData {
+  final String name;
+  final SystemType type;
+
+  _Star({required this.name, required this.type});
+
+  @override
+  String get id => "star";
+
+  @override
+  Offset get position => Offset.zero;
+}
+
+class _WaypointData extends _ObjectData {
+  final SystemWaypoint waypoint;
 
   _WaypointData(this.waypoint);
+
+  @override
+  String get id => waypoint.symbol;
+
+  @override
+  Offset get position => waypoint.position;
+}
+
+class _ShipData extends _ObjectData {
+  final Ship ship;
+
+  _ShipData(this.ship);
+
+  @override
+  String get id => ship.symbol;
+
+  @override
+  Offset get position => throw UnimplementedError();
 }
 
 class PopupData {
@@ -181,11 +219,10 @@ class SystemMapState extends State<SystemMap> {
   late final Starfield _starfield;
   late final Size largeSize;
 
-  final _canvasItemsSizes = <String, Size>{};
   final _canvasController = CanvasKitController();
 
-  final _waypointsHierarchy = <String, List<String>>{};
-  final _waypointsIndex = <String, _WaypointData>{};
+  final _objectsHierarchy = <String, List<String>>{};
+  final _objectsIndex = <String, _ObjectData>{};
 
   final _popups = <String, _Popup>{};
 
@@ -201,21 +238,34 @@ class SystemMapState extends State<SystemMap> {
 
     // First we create the top level waypoints with empty children lists
     for (var waypoint in widget.system.waypoints) {
-      _waypointsIndex[waypoint.symbol] = _WaypointData(waypoint);
+      _objectsIndex[waypoint.symbol] = _WaypointData(waypoint);
 
       if (waypoint.hasOrbits()) continue;
-      _waypointsHierarchy[waypoint.symbol] = [];
+      _objectsHierarchy[waypoint.symbol] = [];
     }
 
     // Then we populate the children lists
     for (var waypoint in widget.system.waypoints) {
       if (!waypoint.hasOrbits()) continue;
       assert(
-        _waypointsHierarchy.containsKey(waypoint.orbits),
+        _objectsHierarchy.containsKey(waypoint.orbits),
         "Waypoint orbited object is not top-level",
       );
-      _waypointsHierarchy[waypoint.orbits]!.add(waypoint.symbol);
+      _objectsHierarchy[waypoint.orbits]!.add(waypoint.symbol);
     }
+
+    for (var ship in widget.ships) {
+      if (ship.nav.status == ShipNavStatus.SHIP_NAV_IN_ORBIT) {
+        _objectsIndex[ship.symbol] = _ShipData(ship);
+        _objectsHierarchy[ship.nav.waypointSymbol]!.add(ship.symbol);
+      }
+    }
+
+    _objectsIndex["star"] = _Star(
+      name: widget.system.name,
+      type: widget.system.type,
+    );
+    _objectsHierarchy["star"] = [];
 
     registerPopup(
       PopupData.viewport(
@@ -260,8 +310,10 @@ class SystemMapState extends State<SystemMap> {
           ),
           foregroundPainter: _TopLevelOrbitsPainter(
             transform: transform,
-            waypoints: _waypointsHierarchy.keys
-                .map((symbol) => _waypointsIndex[symbol]!)
+            waypoints: _objectsHierarchy.keys
+                .map((symbol) => _objectsIndex[symbol])
+                .whereType<_WaypointData>()
+                .map((object) => object.waypoint)
                 .toList(),
           ),
           size: largeSize,
@@ -273,16 +325,8 @@ class SystemMapState extends State<SystemMap> {
           ),
         ],
         children: [
-          _positionCanvasItemCentered(
-            id: "star",
-            centerPosition: Offset.zero,
-            widgetToCenter: _SystemStarWidget(
-              starName: widget.system.name,
-              type: widget.system.type,
-            ),
-          ),
-          for (var waypointSymbol in _waypointsHierarchy.keys)
-            _getWaypointCanvasItem(waypointSymbol),
+          for (var waypointSymbol in _objectsHierarchy.keys)
+            _getObjectCanvasItem(waypointSymbol),
           for (var popup in _popups.values.where((popup) => popup.enabled))
             _getPopupCanvasItem(popup),
         ],
@@ -291,61 +335,70 @@ class SystemMapState extends State<SystemMap> {
   }
 
   CanvasItem _positionCanvasItemCentered({
-    required String id,
+    required _ObjectData object,
     required Offset centerPosition,
     required Widget widgetToCenter,
     CanvasItem Function(Offset position, Widget centeredWidget)? builder,
   }) {
     Offset position = centerPosition;
-    Size? size = _canvasItemsSizes[id];
-    if (size != null) {
-      position = _canvasItemsSizes[id]!.uncenter(position);
+    if (object.size != null) {
+      position = object.size!.uncenter(position);
     }
 
     builder ??= (position, centeredWidget) => CanvasItem(
-      id: id,
+      id: object.id,
       worldPosition: position,
       child: centeredWidget,
-      estimatedSize: size,
+      estimatedSize: object.size,
     );
 
     return builder(
       position,
       MeasureSize(
         onChange: (size) => setState(() {
-          _canvasItemsSizes[id] = size;
+          object.size = size;
         }),
         child: widgetToCenter,
       ),
     );
   }
 
-  CanvasItem _getWaypointCanvasItem(String waypointSymbol) {
-    var orbitals = _waypointsHierarchy[waypointSymbol]!;
-
-    var waypointData = _waypointsIndex[waypointSymbol]!;
-    Widget widget = WaypointWidget(waypointData.waypoint);
-    if (orbitals.isNotEmpty) {
-      widget = GravitationalLayout(
-        initialAngle: waypointSymbol.hashCode.toDouble(),
-        orbitSpacing: 3,
-        orbitPaint: Paint()
-          ..color = Colors.white.withAlpha(100)
-          ..style = PaintingStyle.stroke,
-        body: widget,
-        orbiting: orbitals
-            .map(
-              (orbitalsSymbol) =>
-                  WaypointWidget(_waypointsIndex[orbitalsSymbol]!.waypoint),
-            )
-            .toList(),
-      );
+  Widget _getObjectWidget(_ObjectData object) {
+    switch (object) {
+      case _Star():
+        return _SystemStarWidget(object);
+      case _WaypointData(:var waypoint):
+        var orbitals = _objectsHierarchy[waypoint.symbol] ?? [];
+        Widget widget = WaypointWidget(waypoint);
+        if (orbitals.isNotEmpty) {
+          widget = GravitationalLayout(
+            initialAngle: waypoint.symbol.hashCode.toDouble(),
+            orbitSpacing: 3,
+            orbitPaint: Paint()
+              ..color = Colors.white.withAlpha(100)
+              ..style = PaintingStyle.stroke,
+            body: widget,
+            orbiting: orbitals
+                .map(
+                  (orbitalsSymbol) =>
+                      _getObjectWidget(_objectsIndex[orbitalsSymbol]!),
+                )
+                .toList(),
+          );
+        }
+        return widget;
+      case _ShipData(:var ship):
+        return ShipWidget(ship);
     }
+  }
+
+  CanvasItem _getObjectCanvasItem(String objectSymbol) {
+    var objectData = _objectsIndex[objectSymbol]!;
 
     return _positionCanvasItemCentered(
-      id: waypointSymbol,
-      centerPosition: waypointData.waypoint.position,
-      widgetToCenter: widget,
+      object: objectData,
+      centerPosition: objectData.position,
+      widgetToCenter: _getObjectWidget(objectData),
     );
   }
 
@@ -401,18 +454,17 @@ class _SystemTypeStyle {
 }
 
 class _SystemStarWidget extends StatelessWidget {
-  final String starName;
-  final SystemType type;
+  final _Star star;
 
-  _SystemTypeStyle get style => _systemTypeStyles[type]!;
+  _SystemTypeStyle get style => _systemTypeStyles[star.type]!;
 
-  const _SystemStarWidget({required this.starName, required this.type});
+  const _SystemStarWidget(this.star);
 
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: () => SystemMapState.of(context).togglePopup("star"),
     child: Tooltip(
-      message: "$starName (${type.prettyName})",
+      message: "${star.name} (${star.type.prettyName})",
       child: Container(
         width: style.radius * 2,
         height: style.radius * 2,
@@ -475,7 +527,7 @@ final _systemTypeStyles = {
 
 class _TopLevelOrbitsPainter extends CustomPainter {
   final Matrix4 transform;
-  final List<_WaypointData> waypoints;
+  final Iterable<SystemWaypoint> waypoints;
 
   _TopLevelOrbitsPainter({required this.transform, required this.waypoints});
 
@@ -490,7 +542,7 @@ class _TopLevelOrbitsPainter extends CustomPainter {
     double scaling = transform.right.length;
 
     for (var waypoint in waypoints) {
-      double radius = waypoint.waypoint.position.distance * scaling;
+      double radius = waypoint.position.distance * scaling;
       canvas.drawCircle(center, radius, paint);
     }
   }
