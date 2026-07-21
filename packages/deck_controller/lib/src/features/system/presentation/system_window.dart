@@ -26,14 +26,15 @@ class SystemWindow extends ConsumerWidget {
     return switch ((vm.fetchSystem(ref), vm.fetchShips(ref))) {
       (_, AsyncError(:final error)) ||
       (AsyncError(:final error), _) => Text("Error: $error"),
-      (AsyncData(value: final system), AsyncData(value: final ships)) => Row(
-        children: [
-          Padding(
-            padding: EdgeInsetsGeometry.symmetric(horizontal: 4),
-            child: _SystemInfoCard(system),
+      (AsyncData(value: final system), AsyncData(value: final ships)) => FTheme(
+        data: context.theme.copyWith(
+          cardStyle: .delta(
+            decoration: .boxDelta(
+              color: context.theme.cardStyle.decoration.color?.withAlpha(200),
+            ),
           ),
-          Expanded(child: SystemMap(system, ships)),
-        ],
+        ),
+        child: SystemMap(system, ships),
       ),
       _ => FCircularProgress(size: .lg),
     };
@@ -59,6 +60,8 @@ class _SystemInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    System system = this.system;
+
     final waypointTypes = WaypointType.values
         .map(
           (wType) => (
@@ -144,16 +147,34 @@ class _WaypointData {
   _WaypointData(this.waypoint);
 }
 
-class _PopupData {
+class PopupData {
   final String id;
   final WidgetBuilder builder;
-  final Offset? worldPosition;
   final Offset? linkedTo;
+  Offset? worldPosition;
+  Offset? viewportPosition;
 
-  // Will be used once viewport positioning algorithm implemented.
-  // Offset? viewportPosition;
+  PopupData.world({
+    required this.id,
+    required this.builder,
+    required Offset this.worldPosition,
+    this.linkedTo,
+  }) : viewportPosition = null;
 
-  _PopupData(this.id, this.builder, this.worldPosition, this.linkedTo);
+  PopupData.viewport({
+    required this.id,
+    required this.builder,
+    required Offset this.viewportPosition,
+    this.linkedTo,
+  }) : worldPosition = null;
+}
+
+class _Popup {
+  final PopupData data;
+  bool enabled = false;
+  Size? size;
+
+  _Popup(this.data);
 }
 
 class SystemMapState extends State<SystemMap> {
@@ -166,7 +187,7 @@ class SystemMapState extends State<SystemMap> {
   final _waypointsHierarchy = <String, List<String>>{};
   final _waypointsIndex = <String, _WaypointData>{};
 
-  final _popups = <String, _PopupData>{};
+  final _popups = <String, _Popup>{};
 
   @override
   void initState() {
@@ -195,21 +216,27 @@ class SystemMapState extends State<SystemMap> {
       );
       _waypointsHierarchy[waypoint.orbits]!.add(waypoint.symbol);
     }
+
+    registerPopup(
+      PopupData.viewport(
+        id: "star",
+        builder: (context) => _SystemInfoCard(widget.system),
+        viewportPosition: Offset.zero,
+        linkedTo: Offset.zero,
+      ),
+    );
+    togglePopup("star");
   }
 
-  void togglePopup({
-    required String id,
-    required WidgetBuilder builder,
-    Offset? worldPosition,
-    Offset? linkedTo,
-  }) {
-    if (_popups.containsKey(id)) {
-      setState(() => _popups.remove(id));
-    } else {
-      setState(
-        () => _popups[id] = _PopupData(id, builder, worldPosition, linkedTo),
-      );
-    }
+  void registerPopup(PopupData popup) {
+    _popups[popup.id] = _Popup(popup);
+  }
+
+  void togglePopup(String id) {
+    _Popup popup = _popups[id]!;
+    setState(() {
+      popup.enabled = !popup.enabled;
+    });
   }
 
   @override
@@ -240,7 +267,10 @@ class SystemMapState extends State<SystemMap> {
           size: largeSize,
         ),
         foregroundLayers: [
-          (transform) => _PopupConnectionsPainter(transform, _popups.values),
+          (transform) => _PopupConnectionsPainter(
+            transform,
+            _popups.values.where((popup) => popup.enabled),
+          ),
         ],
         children: [
           _positionCanvasItemCentered(
@@ -253,7 +283,8 @@ class SystemMapState extends State<SystemMap> {
           ),
           for (var waypointSymbol in _waypointsHierarchy.keys)
             _getWaypointCanvasItem(waypointSymbol),
-          for (var popupData in _popups.values) _getPopupCanvasItem(popupData),
+          for (var popup in _popups.values.where((popup) => popup.enabled))
+            _getPopupCanvasItem(popup),
         ],
       ),
     );
@@ -318,27 +349,38 @@ class SystemMapState extends State<SystemMap> {
     );
   }
 
-  CanvasItem _getPopupCanvasItem(_PopupData popup) {
+  CanvasItem _getPopupCanvasItem(_Popup popup) {
     Offset worldPosition;
     Offset? viewportPosition;
     CanvasAnchor anchor;
 
-    if (popup.worldPosition == null) {
-      // should be placed in viewport position
-      throw UnimplementedError();
+    if (popup.data.worldPosition == null) {
+      anchor = CanvasAnchor.viewport;
+      worldPosition = Offset.zero;
+      // bug in CanvasKit, worldPosition cannot be null
+      viewportPosition = popup.data.viewportPosition;
     } else {
       anchor = CanvasAnchor.world;
-      worldPosition = popup.worldPosition!;
+      worldPosition = popup.data.worldPosition!;
       viewportPosition = null;
     }
 
     return CanvasItem(
-      id: "${popup.id}-popup",
+      id: "${popup.data.id}-popup",
       anchor: anchor,
       lockZoom: true,
       worldPosition: worldPosition,
       viewportPosition: viewportPosition,
-      child: popup.builder(context),
+      draggable: true,
+      onWorldMoved: (value) => setState(() => popup.data.worldPosition = value),
+      onViewportMoved: (value) =>
+          setState(() => popup.data.viewportPosition = value),
+      child: MeasureSize(
+        onChange: (size) {
+          setState(() => popup.size = size);
+        },
+        child: popup.data.builder(context),
+      ),
     );
   }
 
@@ -367,17 +409,20 @@ class _SystemStarWidget extends StatelessWidget {
   const _SystemStarWidget({required this.starName, required this.type});
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: "$starName (${type.prettyName})",
-    child: Container(
-      width: style.radius * 2,
-      height: style.radius * 2,
-      decoration: BoxDecoration(
-        shape: .circle,
-        color: style.color,
-        border: style.outerLayerColor == null
-            ? null
-            : BoxBorder.all(color: style.outerLayerColor!),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: () => SystemMapState.of(context).togglePopup("star"),
+    child: Tooltip(
+      message: "$starName (${type.prettyName})",
+      child: Container(
+        width: style.radius * 2,
+        height: style.radius * 2,
+        decoration: BoxDecoration(
+          shape: .circle,
+          color: style.color,
+          border: style.outerLayerColor == null
+              ? null
+              : BoxBorder.all(color: style.outerLayerColor!),
+        ),
       ),
     ),
   );
@@ -462,7 +507,7 @@ class _TopLevelOrbitsPainter extends CustomPainter {
 
 class _PopupConnectionsPainter extends CustomPainter {
   final Matrix4 transform;
-  final Iterable<_PopupData> popups;
+  final Iterable<_Popup> popups;
 
   _PopupConnectionsPainter(this.transform, this.popups);
 
@@ -473,12 +518,17 @@ class _PopupConnectionsPainter extends CustomPainter {
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
-    for (_PopupData popup in popups) {
-      if (popup.linkedTo == null) continue;
-      if (popup.worldPosition == null) throw UnimplementedError();
+    for (_Popup popup in popups) {
+      if (popup.data.linkedTo == null) continue;
 
-      final start = _worldToScreen(popup.worldPosition!);
-      final end = _worldToScreen(popup.linkedTo!);
+      Offset start;
+      if (popup.data.worldPosition == null) {
+        start = popup.data.viewportPosition!;
+      } else {
+        start = _worldToScreen(popup.data.worldPosition!);
+      }
+
+      final end = _worldToScreen(popup.data.linkedTo!);
 
       final points = _lineToOrthogonalComponents(start, end);
       for (var i = 1; i < points.length; i++) {

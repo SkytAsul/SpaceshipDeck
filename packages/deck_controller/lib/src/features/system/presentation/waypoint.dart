@@ -8,32 +8,49 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-class WaypointWidget extends StatelessWidget {
+class WaypointWidget extends StatefulWidget {
   final SystemWaypoint waypoint;
 
-  _WaypointStyle get _style =>
-      _waypointTypeStyles[waypoint.type] ?? _WaypointStyle();
-
   const WaypointWidget(this.waypoint, {super.key});
+
+  @override
+  State<WaypointWidget> createState() => _WaypointWidgetState();
+}
+
+class _WaypointWidgetState extends State<WaypointWidget> {
+  _WaypointStyle get _style =>
+      _waypointTypeStyles[widget.waypoint.type] ?? _WaypointStyle();
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      var realPosition = widget.waypoint.position;
+      if (widget.waypoint.hasOrbits()) {
+        realPosition += GravitationalLayout.getWidgetPosition(context);
+      }
+      SystemMapState.of(context).registerPopup(
+        PopupData.world(
+          id: widget.waypoint.symbol,
+          worldPosition: realPosition + Offset(20, 15),
+          builder: (context) => WaypointInfoWidget(widget.waypoint),
+          linkedTo: realPosition,
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final style = _style;
     return GestureDetector(
       onTap: () {
-        var realPosition = waypoint.position;
-        if (waypoint.hasOrbits()) {
-          realPosition += GravitationalLayout.getWidgetPosition(context);
-        }
-        SystemMapState.of(context).togglePopup(
-          id: waypoint.symbol,
-          worldPosition: realPosition + Offset(20, 15),
-          builder: (context) => WaypointInfoWidget(waypoint),
-          linkedTo: realPosition,
-        );
+        SystemMapState.of(context).togglePopup(widget.waypoint.symbol);
       },
       child: Tooltip(
-        message: "${waypoint.symbol} (${waypoint.type.prettyName})",
+        message:
+            "${widget.waypoint.symbol} (${widget.waypoint.type.prettyName})",
         child: Container(
           width: style.radius * 2,
           height: style.radius * 2,
