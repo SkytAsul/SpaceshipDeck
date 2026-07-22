@@ -256,14 +256,22 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  font_awesome_flutter:
+    dependency: transitive
+    description:
+      name: font_awesome_flutter
+      sha256: "09dcde8ab90ffae1a7d65ff2ef96fc62a17ad9d0ce7c127b317ded676b0d5935"
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.0.0"
   forui:
     dependency: transitive
     description:
       name: forui
-      sha256: cdecccadcc54fa786e691cd7debca2e2d422106d0e35d0aaa8b74262bf2af5c5
+      sha256: d55f88f53f6bc0c6e435370a9875e75e687cb5f8e7c82a41c94e8d05e80d0763
       url: "https://pub.dev"
     source: hosted
-    version: "0.24.1"
+    version: "0.24.2"
   forui_assets:
     dependency: transitive
     description:
@@ -736,10 +744,10 @@ packages:
     dependency: transitive
     description:
       name: synchronized
-      sha256: "93b153dcb6a26dcddee6ca087dd634b53e38c10b5aa163e8e49501a776456153"
+      sha256: "61894a1956de6b4fc1aefd0892e109514a1a706cbece3ac59decd90ff5a7a423"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.1"
+    version: "3.4.1+1"
   term_glyph:
     dependency: transitive
     description:
